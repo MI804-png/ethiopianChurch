@@ -65,8 +65,8 @@ type EventPayload = {
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(currentDir, '..');
-const dataDir = path.join(projectRoot, 'data');
-const uploadsDir = path.join(projectRoot, 'uploads');
+const dataDir = path.resolve(process.env.DATA_DIR || path.join(projectRoot, 'data'));
+const uploadsDir = path.resolve(process.env.UPLOADS_DIR || path.join(projectRoot, 'uploads'));
 const eventUploadsDir = path.join(uploadsDir, 'events');
 const dbPath = path.join(dataDir, 'church.db');
 const jwtSecret = process.env.JWT_SECRET || 'budapest-medhane-alem-secret';
@@ -276,6 +276,10 @@ app.get('/admin', sendRootFile('admin.html'));
 app.get('/admin.js', sendRootFile('admin.js'));
 app.get('/community', sendRootFile('community.html'));
 app.get('/community.js', sendRootFile('community.js'));
+
+app.get('/health', (_req: Request, res: Response) => {
+  res.status(200).json({ ok: true });
+});
 app.get('/login', sendRootFile('login.html'));
 app.get('/members-dashboard', sendRootFile('members-dashboard.html'));
 
