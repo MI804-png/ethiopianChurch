@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Budapest Medhane Alem Church</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="admin-body">
+  <div class="site-shell">
+    <header class="topbar">
+      <div class="container topbar__content">
+        <p>Protected administrator workspace</p>
+        <p><a href="/">Return to public website</a></p>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container admin-shell">
+        <section class="admin-auth-card" id="admin-auth-card">
+          <p class="section-tag">Administrator login</p>
+          <h1>Manage prayers, registrations, and visitors</h1>
+          <p>Only the administrator should know the login credentials for this dashboard.</p>
+          <form class="contact-form" id="admin-login-form">
+            <label>
+              <span>Username</span>
+              <input type="text" name="username" placeholder="Admin username" required>
+            </label>
+            <label>
+              <span>Password</span>
+              <input type="password" name="password" placeholder="Admin password" required>
+            </label>
+            <button class="button button--primary" type="submit">Sign in</button>
+            <p class="form-feedback" id="admin-login-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="admin-dashboard" id="admin-dashboard" hidden>
+          <div class="admin-header">
+            <div>
+              <p class="section-tag">Dashboard</p>
+              <h1>Budapest Medhane Alem Church Admin</h1>
+            </div>
+            <div class="admin-header__actions">
+              <span class="admin-pill" id="admin-identity"></span>
+              <button class="button button--secondary" id="logout-button" type="button">Logout</button>
+            </div>
+          </div>
+
+          <div class="admin-stats" id="admin-stats"></div>
+
+          <div class="admin-grid">
+            <section class="admin-card">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">Prayer management</p>
+                  <h2>Add, edit, or delete prayers</h2>
+                </div>
+              </div>
+              <form class="contact-form" id="prayer-form">
+                <input type="hidden" name="id">
+                <label>
+                  <span>Prayer title</span>
+                  <input type="text" name="title" placeholder="Prayer title" required>
+                </label>
+                <label>
+                  <span>Category</span>
+                  <input type="text" name="category" placeholder="Weekly Prayer, Feast Day, Community" required>
+                </label>
+                <label>
+                  <span>Scheduled time</span>
+                  <input type="text" name="scheduledFor" placeholder="Every Sunday, 6:00 - 10:30" required>
+                </label>
+                <label>
+                  <span>Description</span>
+                  <textarea name="content" rows="5" placeholder="Prayer details" required></textarea>
+                </label>
+                <div class="admin-form-actions">
+                  <button class="button button--primary" type="submit">Save prayer</button>
+                  <button class="button button--secondary" id="prayer-reset" type="button">Reset</button>
+                </div>
+                <p class="form-feedback" id="prayer-feedback" role="status" aria-live="polite"></p>
+              </form>
+              <div class="admin-list" id="prayer-admin-list"></div>
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">Prayer trash</p>
+                  <h2>Restore mistakenly deleted prayers</h2>
+                </div>
+              </div>
+              <div class="admin-list" id="prayer-trash-list"></div>
+            </section>
+
+            <section class="admin-card admin-card--wide">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">Event management</p>
+                  <h2>Create church events with time, date, files, and details</h2>
+                </div>
+                <button class="button button--secondary" id="event-new-button" type="button">Add new event</button>
+              </div>
+              <form class="contact-form" id="event-form" enctype="multipart/form-data">
+                <input type="hidden" name="id">
+                <input type="hidden" name="removeDocument" value="false">
+                <label>
+                  <span>Event title</span>
+                  <input type="text" name="title" placeholder="Church event title" required>
+                </label>
+                <label>
+                  <span>Category</span>
+                  <input type="text" name="category" placeholder="Liturgy, Conference, Youth, Memorial" required>
+                </label>
+                <label>
+                  <span>Date</span>
+                  <input type="date" name="eventDate" required>
+                </label>
+                <label>
+                  <span>Start time</span>
+                  <input type="time" name="eventStartTime" required>
+                </label>
+                <label>
+                  <span>End time</span>
+                  <input type="time" name="eventEndTime" required>
+                </label>
+                <label>
+                  <span>Location</span>
+                  <input type="text" name="location" placeholder="Budapest Medhane Alem Church or other venue">
+                </label>
+                <label>
+                  <span>External link</span>
+                  <input type="url" name="externalLink" placeholder="https://event page or livestream link">
+                </label>
+                <label>
+                  <span>Upload document</span>
+                  <input type="file" name="document" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png">
+                </label>
+                <p class="admin-attachment-note" id="event-document-status"></p>
+                <label class="checkbox-row">
+                  <input type="checkbox" name="isPublished" checked>
+                  <span>Post this event to users</span>
+                </label>
+                <label>
+                  <span>Details</span>
+                  <textarea name="details" rows="5" placeholder="Event details, schedule, and instructions" required></textarea>
+                </label>
+                <div class="admin-form-actions">
+                  <button class="button button--primary" type="submit">Save event</button>
+                  <button class="button button--secondary" id="event-reset" type="button">Reset</button>
+                </div>
+                <p class="form-feedback" id="event-feedback" role="status" aria-live="polite"></p>
+              </form>
+              <div class="admin-list" id="event-admin-list"></div>
+            </section>
+
+            <section class="admin-card">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">Community approvals</p>
+                  <h2>Review and accept registrations</h2>
+                </div>
+              </div>
+              <div class="admin-list" id="registration-list"></div>
+            </section>
+
+            <section class="admin-card">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">Community access links</p>
+                  <h2>Generate member-only share links</h2>
+                </div>
+              </div>
+              <form class="contact-form" id="member-link-form">
+                <label>
+                  <span>Approved member</span>
+                  <select name="userId" id="member-select" required></select>
+                </label>
+                <label>
+                  <span>Expiry (days)</span>
+                  <input type="number" name="expiresInDays" min="1" max="60" value="7" required>
+                </label>
+                <button class="button button--primary" type="submit">Generate link</button>
+                <p class="form-feedback" id="member-link-feedback" role="status" aria-live="polite"></p>
+              </form>
+              <div class="admin-list" id="member-links-list"></div>
+            </section>
+
+            <section class="admin-card admin-card--wide">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">Community resources</p>
+                  <h2>Add prayer documents or post videos</h2>
+                </div>
+              </div>
+              <form class="contact-form" id="resource-form">
+                <label>
+                  <span>Resource title</span>
+                  <input type="text" name="title" placeholder="Prayer PDF or teaching video title" required>
+                </label>
+                <label>
+                  <span>Type</span>
+                  <select name="type" required>
+                    <option value="document">Document</option>
+                    <option value="video">Video</option>
+                  </select>
+                </label>
+                <label>
+                  <span>URL</span>
+                  <input type="url" name="url" placeholder="https://..." required>
+                </label>
+                <label>
+                  <span>Description</span>
+                  <textarea name="description" rows="4" placeholder="Optional description"></textarea>
+                </label>
+                <button class="button button--primary" type="submit">Publish resource</button>
+                <p class="form-feedback" id="resource-feedback" role="status" aria-live="polite"></p>
+              </form>
+              <div class="admin-list" id="resource-list"></div>
+            </section>
+
+            <section class="admin-card admin-card--wide">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">Visitor log</p>
+                  <h2>Recent website entries</h2>
+                </div>
+              </div>
+              <div class="visitor-table-wrap">
+                <table class="visitor-table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Page</th>
+                      <th>Referrer</th>
+                      <th>IP</th>
+                      <th>User agent</th>
+                    </tr>
+                  </thead>
+                  <tbody id="visitor-list"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

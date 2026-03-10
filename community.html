@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Portal | Budapest Medhane Alem Church</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="admin-body">
+  <div class="site-shell">
+    <header class="topbar">
+      <div class="container topbar__content">
+        <p>Community portal for approved members</p>
+        <p><a href="/">Return to public website</a></p>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container admin-shell">
+        <section class="admin-auth-card" id="community-gate">
+          <p class="section-tag">Community access</p>
+          <h1>Secure member content</h1>
+          <p>Use your approved community link to enter. Access is restricted to approved members only.</p>
+          <p class="form-feedback" id="community-gate-feedback" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="admin-dashboard" id="community-dashboard" hidden>
+          <div class="admin-header">
+            <div>
+              <p class="section-tag">Member portal</p>
+              <h1>Prayer documents and videos</h1>
+            </div>
+            <div class="admin-header__actions">
+              <span class="admin-pill" id="community-member"></span>
+              <button class="button button--secondary" id="community-logout" type="button">Logout</button>
+            </div>
+          </div>
+
+          <section class="admin-card admin-card--wide">
+            <div class="admin-card__header">
+              <div>
+                <p class="section-tag">Resources</p>
+                <h2>Community-only prayer materials</h2>
+              </div>
+            </div>
+            <div class="admin-list" id="community-resource-list"></div>
+          </section>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/community.js"></script>
+</body>
+</html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budapest Medhane Alem Church</title>
+  <meta
+    name="description"
+    content="Official public website for the Ethiopian Orthodox Tewahido Church Under Germany and Surrounding Areas Diocese, Budapest Medhane Alem Church."
+  >
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <div class="container topbar__content">
+        <p data-i18n="topbarOfficial">Official public website for Budapest Medhane Alem Church</p>
+        <p>Tbiliszi tér, Budapest, 1087</p>
+      </div>
+    </header>
+
+    <header class="site-header" id="home">
+      <div class="container nav-wrap">
+        <a class="brand" href="#home" aria-label="Budapest Medhane Alem Church home">
+          <span class="brand__crest">+</span>
+          <span class="brand__text">
+            <strong data-i18n="brandName">Budapest Medhane Alem Church</strong>
+            <span data-i18n="brandSubtitle">Ethiopian Orthodox Tewahido Church</span>
+          </span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+          <a href="#about" data-i18n="navAbout">About</a>
+          <a href="#identity" data-i18n="navIdentity">Identity</a>
+          <a href="#worship" data-i18n="navWorship">Worship</a>
+          <a href="#prayers" data-i18n="navPrayers">Prayers</a>
+          <a href="#community" data-i18n="navCommunity">Community</a>
+          <a href="/community">Portal</a>
+          <a href="#ministries" data-i18n="navMinistries">Ministries</a>
+          <a href="#gallery" data-i18n="navGallery">Gallery</a>
+          <a href="#contact" data-i18n="navContact">Contact</a>
+          <a href="/admin" data-i18n="navAdmin">Admin</a>
+        </nav>
+        <label class="language-switch" for="language-select">
+          <span data-i18n="languageLabel">Language</span>
+          <select id="language-select" aria-label="Language selector">
+            <option value="en">English</option>
+            <option value="hu">Magyar</option>
+            <option value="am">አማርኛ</option>
+          </select>
+        </label>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero section">
+        <div class="container hero__grid">
+          <div class="hero__content reveal">
+            <p class="eyebrow" data-i18n="heroEyebrow">Budapest parish under the Germany and surrounding areas diocese</p>
+            <h1 class="hero__title amharic">በኢትዮጵያ ኦርቶዶክስ ተዋህዶ ቤተክርስቲያን በጀርመንና አካባቢው ሀገረ ስብከት የቡዳፔስት መድኃኔዓለም ቤተክርስቲያን</h1>
+            <p class="hero__subtitle">Ethiopian Orthodox Tewahido Church Under Germany and Surounding Areas Dioces Budapest Medahanealem Church</p>
+            <p class="hero__subtitle hero__subtitle--hungarian">Az Etióp Ortodox Tewahedo Egyház Németországi és Környező Területek Egyházmegyéje - Budapesti Medhane Alem Templom</p>
+            <p class="hero__lead" data-i18n="heroLead">A professional public-facing church website presenting the identity, worship life, community mission, and parish address of the Budapest Medhane Alem Church.</p>
+            <div class="hero__actions">
+              <a class="button button--primary" href="#contact" data-i18n="heroAddressBtn">View Official Address</a>
+              <a class="button button--secondary" href="#prayers" data-i18n="heroPrayerBtn">Prayer Board</a>
+              <a class="button button--secondary" href="#ministries" data-i18n="heroExploreBtn">Explore Church Life</a>
+            </div>
+            <div class="hero__highlights">
+              <article>
+                <span>Public Identity</span>
+                <strong>Amharic, English, Hungarian</strong>
+              </article>
+              <article>
+                <span>Location</span>
+                <strong>Budapest, District VIII</strong>
+              </article>
+              <article>
+                <span>Purpose</span>
+                <strong>Worship, sacraments, community</strong>
+              </article>
+            </div>
+          </div>
+          <div class="hero__media reveal reveal-delay">
+            <div class="hero-card">
+              <img src="assets/images/christ-portrait.jpeg" alt="Sacred image used for Budapest Medhane Alem Church" class="hero-card__image">
+              <div class="hero-card__badge">
+                <span>Official Church Website</span>
+                <strong>Budapest Medhane Alem</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="identity-strip">
+        <div class="container identity-strip__grid reveal">
+          <div>
+            <span data-i18n="identityParishLabel">Parish address</span>
+            <strong>Tbiliszi tér, Budapest, 1087</strong>
+          </div>
+          <div>
+            <span data-i18n="identityAffiliationLabel">Ecclesiastical affiliation</span>
+            <strong data-i18n="identityDioceseValue">Under Germany and Surrounding Areas Diocese</strong>
+          </div>
+          <div>
+            <span data-i18n="identityPurposeLabel">Public website purpose</span>
+            <strong data-i18n="identityPurposeValue">Representation, information, verification</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="about">
+        <div class="container split-layout">
+          <div class="split-layout__content reveal">
+            <p class="section-tag" data-i18n="aboutTag">About the parish</p>
+            <h2 data-i18n="aboutTitle">A church home rooted in prayer, sacramental life, and service</h2>
+            <p data-i18n="aboutIntro1">The Budapest Medhane Alem Church serves Ethiopian Orthodox faithful and all visitors seeking worship, spiritual guidance, and community life in Budapest. The site is designed to present the church clearly and professionally for public reference and institutional verification.</p>
+            <p data-i18n="aboutIntro2">Inspired by established Ethiopian Orthodox church presentation standards, this website brings together ecclesiastical identity, multilingual naming, church life, location details, and a dignified visual character appropriate for an official parish presence.</p>
+            <div class="feature-list">
+              <article>
+                <strong data-i18n="aboutFeature1Title">Liturgical life</strong>
+                <p data-i18n="aboutFeature1Desc">Regular prayer, divine liturgy, feast observances, and sacramental ministry.</p>
+              </article>
+              <article>
+                <strong data-i18n="aboutFeature2Title">Pastoral care</strong>
+                <p data-i18n="aboutFeature2Desc">Guidance for families, children, youth, and the wider community.</p>
+              </article>
+              <article>
+                <strong data-i18n="aboutFeature3Title">Public clarity</strong>
+                <p data-i18n="aboutFeature3Desc">Official church naming and Budapest address displayed in a structured form.</p>
+              </article>
+            </div>
+          </div>
+          <div class="split-layout__media reveal reveal-delay">
+            <img src="assets/images/church-image.jpeg" alt="Church-related image for Budapest Medhane Alem Church">
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--tinted" id="identity">
+        <div class="container">
+          <div class="section-heading reveal">
+            <p class="section-tag" data-i18n="identityTag">Official identity</p>
+            <h2 data-i18n="identityTitle">Clear church presentation for public and administrative reference</h2>
+          </div>
+          <div class="cards cards--three">
+            <article class="info-card reveal">
+              <span class="info-card__label">Amharic</span>
+              <p class="amharic">በኢትዮጵያ ኦርቶዶክስ ተዋህዶ ቤተክርስቲያን በጀርመንና አካባቢው ሀገረ ስብከት የቡዳፔስት መድኃኔዓለም ቤተክርስቲያን</p>
+            </article>
+            <article class="info-card reveal reveal-delay">
+              <span class="info-card__label">English</span>
+              <p>Ethiopian Orthodox Tewahido Church Under Germany and Surounding Areas Dioces Budapest Medahanealem Church</p>
+            </article>
+            <article class="info-card reveal reveal-delay-2">
+              <span class="info-card__label">Hungarian</span>
+              <p>Az Etióp Ortodox Tewahedo Egyház Németországi és Környező Területek Egyházmegyéje - Budapesti Medhane Alem Templom</p>
+            </article>
+          </div>
+          <div class="verification-box reveal">
+            <div>
+              <p class="section-tag" data-i18n="verificationTag">Verification note</p>
+              <h3 data-i18n="verificationTitle">Official address and public identity are presented consistently on this website.</h3>
+            </div>
+            <p data-i18n="verificationDesc">This section is intended to make the church easy to identify for visitors, institutions, and verification processes requiring the official church name, physical address, and public presence in Budapest.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="worship">
+        <div class="container">
+          <div class="section-heading reveal">
+            <p class="section-tag" data-i18n="worshipTag">Worship life</p>
+            <h2 data-i18n="worshipTitle">Prayer, liturgy, feast observance, and fellowship</h2>
+          </div>
+          <div class="worship-grid">
+            <article class="worship-card reveal">
+              <h3 data-i18n="worshipCard1Title">Sunday Divine Liturgy</h3>
+              <p data-i18n="worshipCard1Desc">The parish gathers for worship centered on prayer, sacred readings, liturgical chant, and the life-giving tradition of the Ethiopian Orthodox Tewahido Church.</p>
+            </article>
+            <article class="worship-card reveal reveal-delay">
+              <h3 data-i18n="worshipCard2Title">Feast Day Observances</h3>
+              <p data-i18n="worshipCard2Desc">Major feasts and commemorations are observed with reverence, bringing the faithful together in prayer and celebration throughout the year.</p>
+            </article>
+            <article class="worship-card reveal reveal-delay-2">
+              <h3 data-i18n="worshipCard3Title">Children and Community</h3>
+              <p data-i18n="worshipCard3Desc">The church supports spiritual formation, intergenerational belonging, and a stable community environment for families and youth.</p>
+            </article>
+            <article class="worship-card reveal">
+              <h3 data-i18n="worshipCard4Title">Pastoral Guidance</h3>
+              <p data-i18n="worshipCard4Desc">Members of the parish can seek spiritual support, guidance, and community connection through the ministry of the church.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--tinted" id="prayers">
+        <div class="container">
+          <div class="section-heading reveal">
+            <p class="section-tag" data-i18n="prayerTag">Prayer board</p>
+            <h2 data-i18n="prayerTitle">Admin-managed prayer schedule and announcements</h2>
+            <p data-i18n="prayerDesc">Prayer items published by the church administrator appear here with their scheduled time and can be shared across social media platforms.</p>
+          </div>
+          <div class="prayer-stats reveal">
+            <article>
+              <span>Community registrations</span>
+              <strong id="stat-total-members">0</strong>
+            </article>
+            <article>
+              <span>Approved members</span>
+              <strong id="stat-approved-members">0</strong>
+            </article>
+            <article>
+              <span>Pending approvals</span>
+              <strong id="stat-pending-members">0</strong>
+            </article>
+          </div>
+          <div class="prayer-list" id="prayer-list"></div>
+          <p class="empty-state reveal" id="prayer-empty" data-i18n="prayerEmpty">No prayers have been published yet.</p>
+        </div>
+      </section>
+
+      <section class="section" id="events">
+        <div class="container">
+          <div class="section-heading reveal">
+            <p class="section-tag" data-i18n="eventsTag">Church events</p>
+            <h2 data-i18n="eventsTitle">Upcoming events published by the administrator</h2>
+            <p data-i18n="eventsDesc">The church administrator can publish event time, date, location, supporting documents, and other details here.</p>
+          </div>
+          <div class="prayer-list" id="event-list"></div>
+          <p class="empty-state reveal" id="event-empty" data-i18n="eventsEmpty">No events have been published yet.</p>
+        </div>
+      </section>
+
+      <section class="section section--dark" id="ministries">
+        <div class="container">
+          <div class="section-heading reveal">
+            <p class="section-tag" data-i18n="ministriesTag">Sacraments and ministries</p>
+            <h2 data-i18n="ministriesTitle">Core areas of church service reflected from the reference structure</h2>
+          </div>
+          <div class="cards cards--five">
+            <article class="ministry-card reveal">
+              <h3 data-i18n="ministryBaptismTitle">Baptism</h3>
+              <p data-i18n="ministryBaptismDesc">Welcoming the faithful into the sacramental life of the church through holy baptism.</p>
+            </article>
+            <article class="ministry-card reveal reveal-delay">
+              <h3 data-i18n="ministryGuidanceTitle">Spiritual Guidance</h3>
+              <p data-i18n="ministryGuidanceDesc">Prayer, counsel, and instruction that strengthen Christian life and discipleship.</p>
+            </article>
+            <article class="ministry-card reveal reveal-delay-2">
+              <h3 data-i18n="ministryMatrimonyTitle">Holy Matrimony</h3>
+              <p data-i18n="ministryMatrimonyDesc">Marriage honored as a sacred covenant within the life and teaching of the church.</p>
+            </article>
+            <article class="ministry-card reveal">
+              <h3 data-i18n="ministryCommunionTitle">Holy Communion</h3>
+              <p data-i18n="ministryCommunionDesc">The central mystery of communion within the worship life of the faithful community.</p>
+            </article>
+            <article class="ministry-card reveal reveal-delay">
+              <h3 data-i18n="ministryMemorialTitle">Memorial Prayer</h3>
+              <p data-i18n="ministryMemorialDesc">Prayerful remembrance for the departed and support for families in times of loss.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="community">
+        <div class="container community-grid">
+          <div class="community-panel reveal">
+            <p class="section-tag" data-i18n="communityTag">Community registration</p>
+            <h2 data-i18n="communityTitle">Register for the church community</h2>
+            <p data-i18n="communityIntro">Visitors and community members can request registration here. Requests stay pending until the administrator reviews and accepts them.</p>
+            <div class="community-benefits">
+              <article>
+                <strong data-i18n="communityBenefit1Title">Admin approval flow</strong>
+                <p data-i18n="communityBenefit1Desc">Each registration is reviewed before approval.</p>
+              </article>
+              <article>
+                <strong data-i18n="communityBenefit2Title">Community visibility</strong>
+                <p data-i18n="communityBenefit2Desc">The administrator can monitor who has joined and who is still pending.</p>
+              </article>
+              <article>
+                <strong data-i18n="communityBenefit3Title">Responsible communication</strong>
+                <p data-i18n="communityBenefit3Desc">Prayer updates can be published and shared from the official site.</p>
+              </article>
+            </div>
+          </div>
+          <form class="contact-form community-form reveal reveal-delay" id="community-form">
+            <label>
+              <span data-i18n="fieldFullName">Full name</span>
+              <input type="text" name="fullName" placeholder="Your full name" data-i18n-placeholder="placeholderFullName" required>
+            </label>
+            <label>
+              <span data-i18n="fieldEmail">Email address</span>
+              <input type="email" name="email" placeholder="you@example.com" required>
+            </label>
+            <label>
+              <span data-i18n="fieldPhone">Phone number</span>
+              <input type="text" name="phone" placeholder="Phone number" data-i18n-placeholder="placeholderPhone">
+            </label>
+            <label>
+              <span data-i18n="fieldCity">City</span>
+              <input type="text" name="city" placeholder="Budapest or your city" data-i18n-placeholder="placeholderCity">
+            </label>
+            <label>
+              <span data-i18n="fieldMessage">Message</span>
+              <textarea name="message" rows="5" placeholder="Tell the church administration how you would like to join" data-i18n-placeholder="placeholderJoinMessage"></textarea>
+            </label>
+            <button class="button button--primary" type="submit" data-i18n="communitySubmit">Register for approval</button>
+            <p class="form-feedback" id="community-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="section" id="gallery">
+        <div class="container">
+          <div class="section-heading reveal">
+            <p class="section-tag" data-i18n="galleryTag">Church image gallery</p>
+            <h2 data-i18n="galleryTitle">A visual presentation of faith, dignity, and parish identity</h2>
+          </div>
+          <div class="gallery-grid">
+            <figure class="gallery-card gallery-card--large reveal">
+              <img src="assets/images/christ-portrait.jpeg" data-i18n-alt="galleryImg1Alt" alt="Portrait image used in the church website design">
+              <figcaption data-i18n="galleryImg1Caption">Sacred visual identity for the Budapest Medhane Alem Church</figcaption>
+            </figure>
+            <figure class="gallery-card reveal reveal-delay">
+              <img src="assets/images/church-image.jpeg" data-i18n-alt="galleryImg2Alt" alt="Secondary church-related image used in the website">
+              <figcaption data-i18n="galleryImg2Caption">Supporting parish image for the official public website</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--tinted" id="contact">
+        <div class="container contact-grid">
+          <div class="contact-panel reveal">
+            <p class="section-tag" data-i18n="contactTag">Contact and location</p>
+            <h2>Budapest Medhane Alem Church</h2>
+            <div class="contact-list">
+              <article>
+                <span data-i18n="contactAddressLabel">Official address</span>
+                <strong>Tbiliszi tér, Budapest, 1087</strong>
+              </article>
+              <article>
+                <span data-i18n="contactJurisdictionLabel">Jurisdiction</span>
+                <strong data-i18n="contactDioceseValue">Germany and Surrounding Areas Diocese</strong>
+              </article>
+              <article>
+                <span data-i18n="contactPublicUseLabel">Public use</span>
+                <strong data-i18n="contactPublicUseValue">Church information, identity, and verification</strong>
+              </article>
+            </div>
+            <div class="contact-actions">
+              <a class="button button--primary" href="https://www.google.com/maps?q=Tbiliszi+t%C3%A9r,+Budapest,+1087" target="_blank" rel="noreferrer" data-i18n="mapsBtn">Open in Maps</a>
+              <a class="button button--secondary" href="#home" data-i18n="backTopBtn">Back to Top</a>
+            </div>
+          </div>
+          <div class="map-panel reveal reveal-delay">
+            <iframe
+              title="Map showing Tbiliszi tér, Budapest, 1087"
+              src="https://www.google.com/maps?q=Tbiliszi+t%C3%A9r,+Budapest,+1087&output=embed"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--form">
+        <div class="container form-shell reveal">
+          <div>
+            <p class="section-tag" data-i18n="inquiryTag">Inquiry form</p>
+            <h2 data-i18n="inquiryTitle">Website inquiry and verification request</h2>
+            <p data-i18n="inquiryDesc">Use this form layout as a front-end contact point for church administration. It can be connected later to the official parish email or backend service.</p>
+          </div>
+          <form class="contact-form" id="contact-form">
+            <label>
+              <span data-i18n="fieldFullName">Full name</span>
+              <input type="text" name="name" placeholder="Your name" data-i18n-placeholder="placeholderName" required>
+            </label>
+            <label>
+              <span data-i18n="fieldEmail">Email address</span>
+              <input type="email" name="email" placeholder="you@example.com" required>
+            </label>
+            <label>
+              <span data-i18n="fieldSubject">Subject</span>
+              <input type="text" name="subject" placeholder="Verification or church inquiry" data-i18n-placeholder="placeholderSubject" required>
+            </label>
+            <label>
+              <span data-i18n="fieldMessage">Message</span>
+              <textarea name="message" rows="5" placeholder="Write your message here" data-i18n-placeholder="placeholderMessage" required></textarea>
+            </label>
+            <button class="button button--primary" type="submit" data-i18n="sendInquiryBtn">Send inquiry</button>
+            <p class="form-feedback" id="form-feedback" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <p class="footer-title">Budapest Medhane Alem Church</p>
+          <p class="amharic">በኢትዮጵያ ኦርቶዶክስ ተዋህዶ ቤተክርስቲያን በጀርመንና አካባቢው ሀገረ ስብከት የቡዳፔስት መድኃኔዓለም ቤተክርስቲያን</p>
+        </div>
+        <div>
+          <p class="footer-title" data-i18n="footerAddress">Address</p>
+          <p>Tbiliszi tér, Budapest, 1087</p>
+        </div>
+        <div>
+          <p class="footer-title" data-i18n="footerPurpose">Website purpose</p>
+          <p>Public church identity, worship information, and administrative visibility.</p>
+        </div>
+        <div>
+          <p class="footer-title" data-i18n="footerAdmin">Administration</p>
+          <p><a href="/admin" data-i18n="footerAdminLink">Open the protected admin dashboard</a></p>
+          <p><a href="/community">Open community portal</a></p>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <p>&copy; <span id="current-year"></span> Budapest Medhane Alem Church. All rights reserved.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
