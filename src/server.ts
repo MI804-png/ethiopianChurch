@@ -116,6 +116,21 @@ db.exec(`
     visited_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS activity_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    method TEXT,
+    path TEXT,
+    status_code INTEGER,
+    actor_role TEXT,
+    actor_id INTEGER,
+    actor_name TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    details TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS community_resources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
@@ -202,6 +217,14 @@ if (!prayerColumns.some((column) => column.name === 'deleted_at')) {
   db.exec(`ALTER TABLE prayers ADD COLUMN deleted_at TEXT`);
 }
 
+const userColumns = db.prepare(`PRAGMA table_info(users)`).all() as Array<{ name: string }>;
+if (!userColumns.some((column) => column.name === 'password_reset_token')) {
+  db.exec(`ALTER TABLE users ADD COLUMN password_reset_token TEXT`);
+}
+if (!userColumns.some((column) => column.name === 'password_reset_expires')) {
+  db.exec(`ALTER TABLE users ADD COLUMN password_reset_expires TEXT`);
+}
+
 const adminRecord = db
   .prepare('SELECT id, username FROM users WHERE role = ? LIMIT 1')
   .get('admin') as { id: number; username: string } | undefined;
@@ -253,6 +276,8 @@ app.get('/admin', sendRootFile('admin.html'));
 app.get('/admin.js', sendRootFile('admin.js'));
 app.get('/community', sendRootFile('community.html'));
 app.get('/community.js', sendRootFile('community.js'));
+app.get('/login', sendRootFile('login.html'));
+app.get('/members-dashboard', sendRootFile('members-dashboard.html'));
 
 const issueAdminToken = (payload: JwtPayload) =>
   jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
@@ -339,15 +364,116 @@ function normalizeEventPayload(body: EventPayload) {
   };
 }
 
-app.post('/api/public/visits', (req: Request<unknown, unknown, VisitorPayload>, res: Response) => {
-  const pagePath = typeof req.body.path === 'string' && req.body.path.trim() ? req.body.path.trim() : '/';
-  const referrer = typeof req.body.referrer === 'string' ? req.body.referrer.trim() : '';
+function getClientIp(req: Request) {
   const forwardedFor = req.headers['x-forwarded-for'];
-  const ipAddress = Array.isArray(forwardedFor)
+  return Array.isArray(forwardedFor)
     ? forwardedFor[0]
     : typeof forwardedFor === 'string'
       ? forwardedFor.split(',')[0]?.trim()
       : req.ip;
+}
+
+function resolveActor(req: Request): { role: string; id: number | null; name: string } {
+  const adminToken = req.cookies?.church_admin_session;
+  if (adminToken) {
+    try {
+      const payload = jwt.verify(adminToken, jwtSecret) as JwtPayload;
+      return { role: payload.role, id: payload.userId, name: payload.username };
+    } catch {
+      // Ignore invalid cookie and fallback to guest.
+    }
+  }
+
+  const memberToken = req.cookies?.church_member_session;
+  if (memberToken) {
+    try {
+      const payload = jwt.verify(memberToken, jwtSecret) as MemberJwtPayload;
+      return { role: payload.role, id: payload.userId, name: payload.email };
+    } catch {
+      // Ignore invalid cookie and fallback to guest.
+    }
+  }
+
+  return { role: 'guest', id: null, name: 'guest' };
+}
+
+function shouldLogRequest(pathname: string) {
+  if (pathname.startsWith('/assets/') || pathname.startsWith('/uploads/')) {
+    return false;
+  }
+
+  if (pathname === '/styles.css' || pathname === '/script.js' || pathname === '/admin.js' || pathname === '/community.js') {
+    return false;
+  }
+
+  return pathname === '/' || pathname === '/admin' || pathname === '/community' || pathname === '/login' || pathname === '/members-dashboard' || pathname.startsWith('/api/');
+}
+
+function writeActivityLog(entry: {
+  eventType: string;
+  method?: string;
+  path?: string;
+  statusCode?: number;
+  actorRole?: string;
+  actorId?: number | null;
+  actorName?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  details?: string;
+}) {
+  db.prepare(
+    `INSERT INTO activity_logs (event_type, method, path, status_code, actor_role, actor_id, actor_name, ip_address, user_agent, details)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    entry.eventType,
+    entry.method || null,
+    entry.path || null,
+    entry.statusCode ?? null,
+    entry.actorRole || null,
+    entry.actorId ?? null,
+    entry.actorName || null,
+    entry.ipAddress || null,
+    entry.userAgent || null,
+    entry.details || null,
+  );
+}
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const startedAt = Date.now();
+
+  res.on('finish', () => {
+    if (!shouldLogRequest(req.path) || req.path === '/api/admin/logs') {
+      return;
+    }
+
+    try {
+      const actor = resolveActor(req);
+      const userAgent = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '';
+      const duration = Date.now() - startedAt;
+      writeActivityLog({
+        eventType: req.path.startsWith('/api/') ? 'api_request' : 'page_view',
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: res.statusCode,
+        actorRole: actor.role,
+        actorId: actor.id,
+        actorName: actor.name,
+        ipAddress: getClientIp(req) || '',
+        userAgent,
+        details: `durationMs=${duration}`,
+      });
+    } catch {
+      // Never block requests because of logging.
+    }
+  });
+
+  next();
+});
+
+app.post('/api/public/visits', (req: Request<unknown, unknown, VisitorPayload>, res: Response) => {
+  const pagePath = typeof req.body.path === 'string' && req.body.path.trim() ? req.body.path.trim() : '/';
+  const referrer = typeof req.body.referrer === 'string' ? req.body.referrer.trim() : '';
+  const ipAddress = getClientIp(req);
   const userAgent = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '';
 
   db.prepare(
@@ -437,6 +563,18 @@ app.post('/api/public/registrations', (req: Request<unknown, unknown, Registrati
      VALUES (?, ?, ?, ?, ?, 'member', 'pending')`
   ).run(fullName, email, phone, city, message);
 
+  writeActivityLog({
+    eventType: 'registration_submitted',
+    method: 'POST',
+    path: '/api/public/registrations',
+    statusCode: 201,
+    actorRole: 'guest',
+    actorName: email,
+    ipAddress: getClientIp(req) || '',
+    userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+    details: `fullName=${fullName}`,
+  });
+
   res.status(201).json({ message: 'Registration received and awaiting admin approval.' });
 });
 
@@ -459,6 +597,16 @@ app.post('/api/admin/login', (req: Request<unknown, unknown, { username?: string
     .get(username) as { id: number; username: string; passwordHash: string; role: string } | undefined;
 
   if (!admin || !bcrypt.compareSync(password, admin.passwordHash)) {
+    writeActivityLog({
+      eventType: 'admin_login_failed',
+      method: 'POST',
+      path: '/api/admin/login',
+      statusCode: 401,
+      actorRole: 'guest',
+      actorName: username || 'unknown',
+      ipAddress: getClientIp(req) || '',
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+    });
     res.status(401).json({ error: 'Invalid login.' });
     return;
   }
@@ -469,6 +617,18 @@ app.post('/api/admin/login', (req: Request<unknown, unknown, { username?: string
     sameSite: 'lax',
     secure: false,
     maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  writeActivityLog({
+    eventType: 'admin_login_success',
+    method: 'POST',
+    path: '/api/admin/login',
+    statusCode: 200,
+    actorRole: 'admin',
+    actorId: admin.id,
+    actorName: admin.username,
+    ipAddress: getClientIp(req) || '',
+    userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
   });
 
   res.json({ message: 'Authenticated.', username: admin.username });
@@ -1146,6 +1306,19 @@ app.patch('/api/admin/registrations/:id', requireAdmin, (req: Request<{ id: stri
     )
     .get(id);
 
+  writeActivityLog({
+    eventType: 'registration_status_updated',
+    method: 'PATCH',
+    path: `/api/admin/registrations/${id}`,
+    statusCode: 200,
+    actorRole: 'admin',
+    actorId: res.locals.admin.userId,
+    actorName: res.locals.admin.username,
+    ipAddress: getClientIp(req) || '',
+    userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+    details: `newStatus=${status}`,
+  });
+
   res.json(registration);
 });
 
@@ -1159,6 +1332,293 @@ app.delete('/api/admin/registrations/:id', requireAdmin, (req: Request<{ id: str
   }
 
   res.json({ message: 'Registration deleted.' });
+});
+
+// Member Authentication Routes
+app.post('/api/members/register', (req: Request<unknown, unknown, { fullName?: string; email?: string; phone?: string; city?: string; password?: string }>, res: Response) => {
+  const fullName = req.body.fullName?.trim();
+  const email = req.body.email?.trim().toLowerCase();
+  const phone = req.body.phone?.trim() || '';
+  const city = req.body.city?.trim() || '';
+  const password = req.body.password?.trim();
+
+  if (!fullName || !email || !password || password.length < 8) {
+    res.status(400).json({ error: 'Full name, email, and password (min 8 characters) are required.' });
+    return;
+  }
+
+  const existing = db.prepare('SELECT id FROM users WHERE email = ? AND role = ?').get(email, 'member') as { id: number } | undefined;
+  if (existing) {
+    res.status(409).json({ error: 'This email is already registered.' });
+    return;
+  }
+
+  const passwordHash = bcrypt.hashSync(password, 10);
+
+  try {
+    db.prepare(
+      `INSERT INTO users (full_name, email, phone, city, password_hash, role, status)
+       VALUES (?, ?, ?, ?, ?, 'member', 'pending')`
+    ).run(fullName, email, phone, city, passwordHash);
+
+    writeActivityLog({
+      eventType: 'member_register_success',
+      method: 'POST',
+      path: '/api/members/register',
+      statusCode: 201,
+      actorRole: 'guest',
+      actorName: email,
+      ipAddress: getClientIp(req) || '',
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+      details: `fullName=${fullName}; status=pending`,
+    });
+
+    res.status(201).json({ message: 'Account created successfully! Please wait for admin approval before you can login.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
+  }
+});
+
+app.post('/api/members/login', (req: Request<unknown, unknown, { email?: string; password?: string }>, res: Response) => {
+  const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password?.trim();
+
+  if (!email || !password) {
+    res.status(400).json({ error: 'Email and password are required.' });
+    return;
+  }
+
+  const member = db
+    .prepare(
+      `SELECT id, full_name as fullName, email, password_hash as passwordHash, role, status
+       FROM users
+       WHERE email = ? AND role = 'member'
+       LIMIT 1`
+    )
+    .get(email) as { id: number; fullName: string; email: string; passwordHash: string; role: string; status: string } | undefined;
+
+  if (!member || !bcrypt.compareSync(password, member.passwordHash)) {
+    writeActivityLog({
+      eventType: 'member_login_failed',
+      method: 'POST',
+      path: '/api/members/login',
+      statusCode: 401,
+      actorRole: 'guest',
+      actorName: email || 'unknown',
+      ipAddress: getClientIp(req) || '',
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+    });
+    res.status(401).json({ error: 'Invalid email or password.' });
+    return;
+  }
+
+  if (member.status === 'pending') {
+    writeActivityLog({
+      eventType: 'member_login_blocked_pending',
+      method: 'POST',
+      path: '/api/members/login',
+      statusCode: 403,
+      actorRole: 'member',
+      actorId: member.id,
+      actorName: member.email,
+      ipAddress: getClientIp(req) || '',
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+    });
+    res.status(403).json({ error: 'Your account is awaiting admin approval. Please check back soon.' });
+    return;
+  }
+
+  if (member.status === 'rejected') {
+    writeActivityLog({
+      eventType: 'member_login_blocked_rejected',
+      method: 'POST',
+      path: '/api/members/login',
+      statusCode: 403,
+      actorRole: 'member',
+      actorId: member.id,
+      actorName: member.email,
+      ipAddress: getClientIp(req) || '',
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+    });
+    res.status(403).json({ error: 'Your account has been rejected. Please contact the church.' });
+    return;
+  }
+
+  const token = issueMemberToken({
+    userId: member.id,
+    role: 'member',
+    fullName: member.fullName,
+    email: member.email,
+  });
+
+  res.cookie('church_member_session', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+  });
+
+  writeActivityLog({
+    eventType: 'member_login_success',
+    method: 'POST',
+    path: '/api/members/login',
+    statusCode: 200,
+    actorRole: 'member',
+    actorId: member.id,
+    actorName: member.email,
+    ipAddress: getClientIp(req) || '',
+    userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+  });
+
+  res.json({ message: 'Login successful.', fullName: member.fullName });
+});
+
+app.post('/api/members/logout', (_req: Request, res: Response) => {
+  res.clearCookie('church_member_session');
+  res.json({ message: 'Logged out.' });
+});
+
+app.get('/api/members/session', requireMember, (_req: Request, res: Response) => {
+  res.json({ authenticated: true, member: res.locals.member });
+});
+
+app.get('/api/members/status/:email', (req: Request<{ email: string }>, res: Response) => {
+  const email = req.params.email?.trim().toLowerCase();
+
+  if (!email) {
+    res.status(400).json({ error: 'Email is required.' });
+    return;
+  }
+
+  const member = db
+    .prepare(
+      `SELECT id, status, email FROM users
+       WHERE email = ? AND role = 'member'
+       LIMIT 1`
+    )
+    .get(email) as { id: number; status: string; email: string } | undefined;
+
+  if (!member) {
+    res.status(404).json({ error: 'No registration found for this email.' });
+    return;
+  }
+
+  res.json({ email: member.email, status: member.status });
+});
+
+app.post('/api/members/forgot-password', (req: Request<unknown, unknown, { email?: string }>, res: Response) => {
+  const email = req.body.email?.trim().toLowerCase();
+
+  if (!email) {
+    res.status(400).json({ error: 'Email is required.' });
+    return;
+  }
+
+  const member = db
+    .prepare(`SELECT id FROM users WHERE email = ? AND role = 'member'`)
+    .get(email) as { id: number } | undefined;
+
+  if (!member) {
+    // Don't reveal if email exists (security best practice)
+    res.json({ message: 'If the email exists, a reset link will be sent shortly.' });
+    return;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 1); // Valid for 1 hour
+
+  db.prepare(
+    `UPDATE users
+     SET password_reset_token = ?, password_reset_expires = ?
+     WHERE id = ?`
+  ).run(resetToken, expiresAt.toISOString(), member.id);
+
+  // In production, send email with reset link
+  const resetUrl = `${req.protocol}://${req.get('host')}/login?reset_token=${resetToken}`;
+  console.log(`Password reset link for ${email}: ${resetUrl}`);
+
+  res.json({ message: 'If the email exists, a reset link will be sent shortly.' });
+});
+
+app.post('/api/members/reset-password', (req: Request<unknown, unknown, { token?: string; password?: string }>, res: Response) => {
+  const resetToken = req.body.token?.trim();
+  const password = req.body.password?.trim();
+
+  if (!resetToken || !password || password.length < 8) {
+    res.status(400).json({ error: 'Valid reset token and password (min 8 characters) are required.' });
+    return;
+  }
+
+  const member = db
+    .prepare(
+      `SELECT id FROM users
+       WHERE password_reset_token = ?
+       AND password_reset_expires > datetime('now')
+       AND role = 'member'`
+    )
+    .get(resetToken) as { id: number } | undefined;
+
+  if (!member) {
+    res.status(401).json({ error: 'Invalid or expired reset link.' });
+    return;
+  }
+
+  const passwordHash = bcrypt.hashSync(password, 10);
+
+  db.prepare(
+    `UPDATE users
+     SET password_hash = ?, password_reset_token = NULL, password_reset_expires = NULL
+     WHERE id = ?`
+  ).run(passwordHash, member.id);
+
+  res.json({ message: 'Password reset successfully. You can now login.' });
+});
+
+app.get('/api/admin/logs', requireAdmin, (req: Request<unknown, unknown, unknown, { limit?: string }>, res: Response) => {
+  const parsedLimit = Number(req.query.limit || '200');
+  const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 1000) : 200;
+
+  const logs = db
+    .prepare(
+      `SELECT *
+       FROM (
+         SELECT id,
+                'activity' as source,
+                created_at as createdAt,
+                event_type as eventType,
+                method,
+                path,
+                status_code as statusCode,
+                actor_role as actorRole,
+                actor_name as actorName,
+                ip_address as ipAddress,
+                user_agent as userAgent,
+                details
+         FROM activity_logs
+
+         UNION ALL
+
+         SELECT id,
+                'visitor' as source,
+                visited_at as createdAt,
+                'visit' as eventType,
+                'VISIT' as method,
+                page_path as path,
+                201 as statusCode,
+                'guest' as actorRole,
+                'visitor' as actorName,
+                ip_address as ipAddress,
+                user_agent as userAgent,
+                COALESCE(referrer, '') as details
+         FROM visitor_logs
+       ) all_logs
+       ORDER BY datetime(createdAt) DESC, id DESC
+       LIMIT ?`
+    )
+    .all(limit);
+
+  res.json(logs);
 });
 
 app.get('/api/admin/visitors', requireAdmin, (req: Request<unknown, unknown, unknown, { limit?: string }>, res: Response) => {

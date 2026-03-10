@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Login - Budapest Medhane Alem</title>
+  <link rel="stylesheet" href="/styles.css?v=2">
+  <style>
+    .auth-container {
+      max-width: 400px;
+      margin: 4rem auto 2rem;
+      padding: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .auth-tabs button {
+      flex: 1;
+      padding: 0.75rem;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .auth-tabs button.active {
+      color: #c41e3a;
+      border-bottom-color: #c41e3a;
+    }
+
+    .auth-tabs button:hover {
+      color: #333;
+    }
+
+    .auth-form {
+      display: none;
+    }
+
+    .auth-form.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #c41e3a;
+      box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #c41e3a;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .form-button:hover {
+      background-color: #a01830;
+    }
+
+    .form-button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .form-feedback {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 4px;
+      text-align: center;
+      display: none;
+    }
+
+    .form-feedback.success {
+      display: block;
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .form-feedback.error {
+      display: block;
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .form-feedback.info {
+      display: block;
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    .form-link {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .form-link a {
+      color: #c41e3a;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .form-link a:hover {
+      text-decoration: underline;
+    }
+
+    .back-home {
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .back-home a {
+      color: #666;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .back-home a:hover {
+      color: #333;
+    }
+
+    .language-select {
+      display: inline-block;
+      margin-right: auto;
+    }
+
+    header {
+      padding: 1rem 2rem;
+      background-color: #f9f9f9;
+      border-bottom: 1px solid #eee;
+    }
+
+    header a {
+      color: #c41e3a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    header a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display: flex; align-items: center; gap: 2rem;">
+      <div class="language-select">
+        <select id="language-select" style="cursor: pointer; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+          <option value="en">English</option>
+          <option value="hu">Hungarian</option>
+          <option value="am">Amharic</option>
+        </select>
+      </div>
+      <a href="/">← Back to Home</a>
+    </div>
+  </header>
+
+  <div class="auth-container">
+    <div class="auth-tabs">
+      <button class="auth-tab-button active" data-tab="login">
+        <span data-i18n="tabLogin">Login</span>
+      </button>
+      <button class="auth-tab-button" data-tab="register">
+        <span data-i18n="tabRegister">Register</span>
+      </button>
+      <button class="auth-tab-button" data-tab="forgot">
+        <span data-i18n="tabForgot">Forgot Password</span>
+      </button>
+    </div>
+
+    <!-- Login Form -->
+    <form class="auth-form active" id="login-form" data-tab="login">
+      <h2 data-i18n="loginTitle">Member Login</h2>
+      
+      <div class="form-group">
+        <label for="login-email" data-i18n="labelEmail">Email Address</label>
+        <input 
+          type="email" 
+          id="login-email" 
+          name="email" 
+          required 
+          placeholder="your.email@example.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="login-password" data-i18n="labelPassword">Password</label>
+        <input 
+          type="password" 
+          id="login-password" 
+          name="password" 
+          required
+          placeholder="●●●●●●●●"
+        >
+      </div>
+
+      <button type="submit" class="form-button" data-i18n="buttonLogin">Login</button>
+      
+      <p class="form-feedback" id="login-feedback" role="status" aria-live="polite"></p>
+
+      <div class="form-link">
+        <span data-i18n="noAccount">Don't have an account?</span>
+        <a class="switch-tab" data-tab="register" data-i18n="registerHere">Register here</a>
+      </div>
+    </form>
+
+    <!-- Register Form -->
+    <form class="auth-form" id="register-form" data-tab="register">
+      <h2 data-i18n="registerTitle">Create Your Account</h2>
+      
+      <div class="form-group">
+        <label for="register-fullname" data-i18n="labelFullName">Full Name</label>
+        <input 
+          type="text" 
+          id="register-fullname" 
+          name="fullName" 
+          required
+          placeholder="John Doe"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="register-email" data-i18n="labelEmail">Email Address</label>
+        <input 
+          type="email" 
+          id="register-email" 
+          name="email" 
+          required
+          placeholder="your.email@example.com"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="register-phone" data-i18n="labelPhone">Phone (Optional)</label>
+        <input 
+          type="tel" 
+          id="register-phone" 
+          name="phone"
+          placeholder="+1 (555) 000-0000"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="register-city" data-i18n="labelCity">City (Optional)</label>
+        <input 
+          type="text" 
+          id="register-city" 
+          name="city"
+          placeholder="Budapest"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="register-password" data-i18n="labelPassword">Password</label>
+        <input 
+          type="password" 
+          id="register-password" 
+          name="password" 
+          required
+          placeholder="At least 8 characters"
+          minlength="8"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="register-password-confirm" data-i18n="labelPasswordConfirm">Confirm Password</label>
+        <input 
+          type="password" 
+          id="register-password-confirm" 
+          name="passwordConfirm" 
+          required
+          placeholder="Repeat your password"
+          minlength="8"
+        >
+      </div>
+
+      <button type="submit" class="form-button" data-i18n="buttonRegister">Create Account</button>
+      
+      <p class="form-feedback" id="register-feedback" role="status" aria-live="polite"></p>
+
+      <div class="form-link">
+        <span data-i18n="haveAccount">Already have an account?</span>
+        <a class="switch-tab" data-tab="login" data-i18n="loginHere">Login here</a>
+      </div>
+    </form>
+
+    <!-- Forgot Password Form -->
+    <form class="auth-form" id="forgot-form" data-tab="forgot">
+      <h2 data-i18n="forgotTitle">Reset Your Password</h2>
+      
+      <p data-i18n="forgotDescription" style="color: #666; margin-bottom: 1.5rem; font-size: 0.95rem;">
+        Enter your email address and we'll send you a link to reset your password.
+      </p>
+
+      <div class="form-group">
+        <label for="forgot-email" data-i18n="labelEmail">Email Address</label>
+        <input 
+          type="email" 
+          id="forgot-email" 
+          name="email" 
+          required
+          placeholder="your.email@example.com"
+        >
+      </div>
+
+      <button type="submit" class="form-button" data-i18n="buttonSendReset">Send Reset Link</button>
+      
+      <p class="form-feedback" id="forgot-feedback" role="status" aria-live="polite"></p>
+
+      <div class="form-link">
+        <a class="switch-tab" data-tab="login" data-i18n="backToLogin">Back to Login</a>
+      </div>
+    </form>
+
+    <!-- Reset Password Form (shown after reset link clicked) -->
+    <form class="auth-form" id="reset-form" data-tab="reset">
+      <h2 data-i18n="resetTitle">Enter New Password</h2>
+      
+      <div class="form-group">
+        <label for="reset-password" data-i18n="labelPassword">New Password</label>
+        <input 
+          type="password" 
+          id="reset-password" 
+          name="password" 
+          required
+          placeholder="At least 8 characters"
+          minlength="8"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="reset-password-confirm" data-i18n="labelPasswordConfirm">Confirm Password</label>
+        <input 
+          type="password" 
+          id="reset-password-confirm" 
+          name="passwordConfirm" 
+          required
+          placeholder="Repeat your password"
+          minlength="8"
+        >
+      </div>
+
+      <button type="submit" class="form-button" data-i18n="buttonResetPassword">Reset Password</button>
+      
+      <p class="form-feedback" id="reset-feedback" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+
+  <div class="back-home">
+    <a href="/" data-i18n="backHome">← Back to Website</a>
+  </div>
+
+  <script>
+    // Translation system
+    const translations = {
+      en: {
+        tabLogin: 'Login',
+        tabRegister: 'Register',
+        tabForgot: 'Forgot Password',
+        loginTitle: 'Member Login',
+        registerTitle: 'Create Your Account',
+        forgotTitle: 'Reset Your Password',
+        resetTitle: 'Enter New Password',
+        labelEmail: 'Email Address',
+        labelPassword: 'Password',
+        labelPasswordConfirm: 'Confirm Password',
+        labelFullName: 'Full Name',
+        labelPhone: 'Phone (Optional)',
+        labelCity: 'City (Optional)',
+        buttonLogin: 'Login',
+        buttonRegister: 'Create Account',
+        buttonSendReset: 'Send Reset Link',
+        buttonResetPassword: 'Reset Password',
+        noAccount: "Don't have an account?",
+        registerHere: 'Register here',
+        haveAccount: 'Already have an account?',
+        loginHere: 'Login here',
+        backToLogin: 'Back to Login',
+        backToHome: '← Back to Website',
+        forgotDescription: "Enter your email address and we'll send you a link to reset your password.",
+      },
+      hu: {
+        tabLogin: 'Bejelentkezés',
+        tabRegister: 'Regisztráció',
+        tabForgot: 'Elfelejtett jelszó',
+        loginTitle: 'Tag Bejelentkezés',
+        registerTitle: 'Fiók Létrehozása',
+        forgotTitle: 'Jelszó Visszaállítása',
+        resetTitle: 'Adja meg az új jelszót',
+        labelEmail: 'Email Cím',
+        labelPassword: 'Jelszó',
+        labelPasswordConfirm: 'Jelszó Megerősítése',
+        labelFullName: 'Teljes Név',
+        labelPhone: 'Telefon (Opcionális)',
+        labelCity: 'Város (Opcionális)',
+        buttonLogin: 'Bejelentkezés',
+        buttonRegister: 'Fiók Létrehozása',
+        buttonSendReset: 'Visszaállítási Link Küldése',
+        buttonResetPassword: 'Jelszó Visszaállítása',
+        noAccount: 'Nincs fiókja?',
+        registerHere: 'Regisztráljon itt',
+        haveAccount: 'Már van fiókja?',
+        loginHere: 'Jelentkezzen be itt',
+        backToLogin: 'Vissza a bejelentkezéshez',
+        backToHome: '← Vissza a weboldalra',
+        forgotDescription: 'Adja meg az email címét, és egy jelszó-visszaállítási linket küldünk Önnek.',
+      },
+      am: {
+        tabLogin: 'መግብየት',
+        tabRegister: 'ምዝገባ',
+        tabForgot: 'ይለወጡ የተረሳ',
+        loginTitle: 'እንደገና ግባቸን',
+        registerTitle: 'መተዋወቂያ ተክሎ',
+        forgotTitle: 'የይለወጡ ይለወጡ',
+        resetTitle: 'የአዲስ ይለወጡ ያስገቡ',
+        labelEmail: 'ኢሜል አድራሻ',
+        labelPassword: 'ይለወጡ',
+        labelPasswordConfirm: 'ይለወጡ ያረጋግጡ',
+        labelFullName: 'ሙሉ ስም',
+        labelPhone: 'ስልክ (ተራማሚ)',
+        labelCity: 'ከተማ (ተራማሚ)',
+        buttonLogin: 'መግብየት',
+        buttonRegister: 'መተዋወቂያ ተክሎ',
+        buttonSendReset: 'ይለወጡ የኩዊ መገናኛ ይላኩ',
+        buttonResetPassword: 'ይለወጡ ይለውጡ',
+        noAccount: 'መተዋወቂያ ሌልዎ?',
+        registerHere: 'እዚህ ይመዝገቡ',
+        haveAccount: 'መተዋወቂያ ቀድሞ አለ?',
+        loginHere: 'እዚህ ይመግቡ',
+        backToLogin: 'ወደ መግብየት ተመለሳ',
+        backToHome: '← ወደ ድረ-ገጽ ተመለሳ',
+        forgotDescription: 'ኢሜልዎን አድራሻ ያስገቡ እና ይለወጡ ይለውጠዋል ይላኩ።',
+      }
+    };
+
+    // Load saved language preference
+    function loadLanguagePreference() {
+      const saved = localStorage.getItem('preferredLanguage');
+      return saved || 'en';
+    }
+
+    // Apply translations
+    function applyTranslations(lang) {
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          element.textContent = translations[lang][key];
+        }
+      });
+      localStorage.setItem('preferredLanguage', lang);
+    }
+
+    // Initialize language selector
+    const languageSelect = document.getElementById('language-select');
+    languageSelect.value = loadLanguagePreference();
+    applyTranslations(languageSelect.value);
+
+    languageSelect.addEventListener('change', (e) => {
+      applyTranslations(e.target.value);
+    });
+
+    // Tab switching
+    document.querySelectorAll('.auth-tab-button').forEach(button => {
+      button.addEventListener('click', () => {
+        const tab = button.getAttribute('data-tab');
+        switchTab(tab);
+      });
+    });
+
+    document.querySelectorAll('.switch-tab').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = link.getAttribute('data-tab');
+        switchTab(tab);
+      });
+    });
+
+    function switchTab(tab) {
+      // Hide all forms
+      document.querySelectorAll('.auth-form').forEach(form => {
+        form.classList.remove('active');
+      });
+
+      // Deactivate all tab buttons
+      document.querySelectorAll('.auth-tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      // Show selected form
+      const form = document.querySelector(`.auth-form[data-tab="${tab}"]`);
+      if (form) {
+        form.classList.add('active');
+        // Clear feedback
+        const feedback = form.querySelector('.form-feedback');
+        if (feedback) {
+          feedback.textContent = '';
+          feedback.className = 'form-feedback';
+        }
+        // Clear form inputs
+        form.reset();
+      }
+
+      // Activate selected tab button
+      const button = document.querySelector(`.auth-tab-button[data-tab="${tab}"]`);
+      if (button) {
+        button.classList.add('active');
+      }
+    }
+
+    // Form submissions
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
+    document.getElementById('register-form').addEventListener('submit', handleRegister);
+    document.getElementById('forgot-form').addEventListener('submit', handleForgotPassword);
+    document.getElementById('reset-form').addEventListener('submit', handleResetPassword);
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const feedback = document.getElementById('login-feedback');
+      const button = e.target.querySelector('button[type="submit"]');
+
+      button.disabled = true;
+      feedback.textContent = 'Logging in...';
+      feedback.className = 'form-feedback info';
+
+      try {
+        const response = await fetch('/api/members/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include',
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Login failed');
+        }
+
+        feedback.textContent = 'Login successful! Redirecting...';
+        feedback.className = 'form-feedback success';
+        setTimeout(() => {
+          window.location.href = '/members-dashboard';
+        }, 1500);
+      } catch (error) {
+        feedback.textContent = error.message;
+        feedback.className = 'form-feedback error';
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const fullName = document.getElementById('register-fullname').value;
+      const email = document.getElementById('register-email').value;
+      const phone = document.getElementById('register-phone').value;
+      const city = document.getElementById('register-city').value;
+      const password = document.getElementById('register-password').value;
+      const passwordConfirm = document.getElementById('register-password-confirm').value;
+      const feedback = document.getElementById('register-feedback');
+      const button = e.target.querySelector('button[type="submit"]');
+
+      if (password !== passwordConfirm) {
+        feedback.textContent = 'Passwords do not match';
+        feedback.className = 'form-feedback error';
+        return;
+      }
+
+      button.disabled = true;
+      feedback.textContent = 'Creating account...';
+      feedback.className = 'form-feedback info';
+
+      try {
+        const response = await fetch('/api/members/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullName, email, phone, city, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Registration failed');
+        }
+
+        feedback.textContent = 'Account created! Your account is awaiting admin approval. We will notify you by email when approved.';
+        feedback.className = 'form-feedback success';
+        setTimeout(() => {
+          switchTab('login');
+          document.getElementById('login-email').value = email;
+          document.getElementById('login-password').focus();
+        }, 3000);
+      } catch (error) {
+        feedback.textContent = error.message;
+        feedback.className = 'form-feedback error';
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function handleForgotPassword(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value;
+      const feedback = document.getElementById('forgot-feedback');
+      const button = e.target.querySelector('button[type="submit"]');
+
+      button.disabled = true;
+      feedback.textContent = 'Sending reset link...';
+      feedback.className = 'form-feedback info';
+
+      try {
+        const response = await fetch('/api/members/forgot-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Request failed');
+        }
+
+        feedback.textContent = 'Password reset link sent! Please check your email.';
+        feedback.className = 'form-feedback success';
+        setTimeout(() => {
+          switchTab('login');
+        }, 3000);
+      } catch (error) {
+        feedback.textContent = error.message;
+        feedback.className = 'form-feedback error';
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function handleResetPassword(e) {
+      e.preventDefault();
+      const password = document.getElementById('reset-password').value;
+      const passwordConfirm = document.getElementById('reset-password-confirm').value;
+      const feedback = document.getElementById('reset-feedback');
+      const button = e.target.querySelector('button[type="submit"]');
+      const token = new URLSearchParams(window.location.search).get('reset_token');
+
+      if (!token) {
+        feedback.textContent = 'Invalid reset link';
+        feedback.className = 'form-feedback error';
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        feedback.textContent = 'Passwords do not match';
+        feedback.className = 'form-feedback error';
+        return;
+      }
+
+      button.disabled = true;
+      feedback.textContent = 'Resetting password...';
+      feedback.className = 'form-feedback info';
+
+      try {
+        const response = await fetch('/api/members/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Reset failed');
+        }
+
+        feedback.textContent = 'Password reset successfully! Redirecting to login...';
+        feedback.className = 'form-feedback success';
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } catch (error) {
+        feedback.textContent = error.message;
+        feedback.className = 'form-feedback error';
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    // Check for reset token in URL
+    window.addEventListener('load', () => {
+      const token = new URLSearchParams(window.location.search).get('reset_token');
+      if (token) {
+        switchTab('reset');
+        // Update form action with token
+        document.getElementById('reset-form').dataset.token = token;
+      }
+    });
+  </script>
+</body>
+</html>

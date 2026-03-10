@@ -16,6 +16,7 @@ const eventAdminList = document.querySelector('#event-admin-list');
 const eventDocumentStatus = document.querySelector('#event-document-status');
 const registrationList = document.querySelector('#registration-list');
 const visitorList = document.querySelector('#visitor-list');
+const systemLogList = document.querySelector('#system-log-list');
 const adminStats = document.querySelector('#admin-stats');
 const memberLinkForm = document.querySelector('#member-link-form');
 const memberLinkFeedback = document.querySelector('#member-link-feedback');
@@ -458,10 +459,17 @@ async function loadDeletedPrayers() {
 
 async function loadRegistrations() {
   const registrations = await api('/api/admin/registrations?status=all');
-  registrationList.innerHTML = registrations.map((registration) => `
+  
+    // Sort pending to top
+    const sorted = registrations.sort((a, b) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      return 0;
+    });
+  registrationList.innerHTML = sorted.map((registration) => `
     <article class="admin-item">
       <div>
-        <p class="section-tag">${escapeHtml(registration.status)}</p>
+        <p class="section-tag" style="${registration.status === 'pending' ? 'background-color: #fff3cd; color: #856404;' : registration.status === 'approved' ? 'background-color: #d4edda; color: #155724;' : 'background-color: #f8d7da; color: #721c24;'} padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85rem;">${escapeHtml(registration.status.toUpperCase())}</p>
         <h3>${escapeHtml(registration.fullName)}</h3>
         <p>${escapeHtml(registration.email)}</p>
         <p>${escapeHtml(registration.phone || 'No phone provided')}</p>
@@ -523,6 +531,26 @@ async function loadVisitors() {
   `).join('') || '<tr><td colspan="5">No visit records yet.</td></tr>';
 }
 
+async function loadSystemLogs() {
+  if (!systemLogList) {
+    return;
+  }
+
+  const logs = await api('/api/admin/logs?limit=200');
+  systemLogList.innerHTML = logs.map((log) => `
+    <tr>
+      <td>${escapeHtml(new Date(log.createdAt).toLocaleString())}</td>
+      <td>${escapeHtml(log.source || '-')}</td>
+      <td>${escapeHtml(log.eventType || '-')}</td>
+      <td>${escapeHtml(`${log.actorRole || 'guest'}:${log.actorName || 'unknown'}`)}</td>
+      <td>${escapeHtml(log.method || '-')}</td>
+      <td>${escapeHtml(log.path || '-')}</td>
+      <td>${escapeHtml(String(log.statusCode ?? '-'))}</td>
+      <td>${escapeHtml(log.details || '-')}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="8">No system log records yet.</td></tr>';
+}
+
 async function hydrateDashboard() {
   await Promise.all([
     loadOverview(),
@@ -531,6 +559,7 @@ async function hydrateDashboard() {
     loadEvents(),
     loadRegistrations(),
     loadVisitors(),
+    loadSystemLogs(),
     loadApprovedMembers(),
     loadMemberLinks(),
     loadResources(),

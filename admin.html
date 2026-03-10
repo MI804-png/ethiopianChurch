@@ -160,6 +160,7 @@
                 <div>
                   <p class="section-tag">Community approvals</p>
                   <h2>Review and accept registrations</h2>
+                  <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0 0 0;">New registrations require your approval before members can access the portal.</p>
                 </div>
               </div>
               <div class="admin-list" id="registration-list"></div>
@@ -239,6 +240,32 @@
                     </tr>
                   </thead>
                   <tbody id="visitor-list"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="admin-card admin-card--wide">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag">All logs</p>
+                  <h2>Unified system activity log</h2>
+                </div>
+              </div>
+              <div class="visitor-table-wrap">
+                <table class="visitor-table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Source</th>
+                      <th>Event</th>
+                      <th>Actor</th>
+                      <th>Method</th>
+                      <th>Path</th>
+                      <th>Status</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="system-log-list"></tbody>
                 </table>
               </div>
             </section>

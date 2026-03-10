@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Dashboard - Budapest Medhane Alem</title>
+  <link rel="stylesheet" href="/styles.css?v=2">
+  <style>
+    .dashboard-header {
+      background-color: #f9f9f9;
+      padding: 2rem;
+      border-bottom: 1px solid #eee;
+    }
+
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .member-info {
+      flex: 1;
+    }
+
+    .member-info h1 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+    }
+
+    .member-info p {
+      margin: 0;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .language-select {
+      display: inline-block;
+    }
+
+    .logout-button {
+      padding: 0.5rem 1rem;
+      background-color: #c41e3a;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background-color 0.2s;
+    }
+
+    .logout-button:hover {
+      background-color: #a01830;
+    }
+
+    .dashboard-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+
+    .dashboard-section h2 {
+      margin-top: 0;
+      color: #c41e3a;
+      border-bottom: 2px solid #c41e3a;
+      padding-bottom: 1rem;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 1.5rem;
+    }
+
+    .card {
+      background: #f9f9f9;
+      padding: 1.5rem;
+      border-radius: 8px;
+      border-left: 4px solid #c41e3a;
+    }
+
+    .card h3 {
+      margin: 0 0 0.5rem 0;
+      color: #333;
+    }
+
+    .card p {
+      margin: 0;
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .card-meta {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .event-time {
+      display: inline-block;
+      background-color: #c41e3a;
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .button-primary {
+      background-color: #c41e3a;
+      color: white;
+    }
+
+    .button-primary:hover {
+      background-color: #a01830;
+    }
+
+    .button-secondary {
+      background-color: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    .button-secondary:hover {
+      background-color: #e8e8e8;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #c41e3a;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-left: 0.5rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-badge.published {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .status-badge.pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .nav-links {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+
+    .nav-links a {
+      display: inline-block;
+      margin-right: 1.5rem;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .nav-links a:hover {
+      color: #c41e3a;
+    }
+
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header-actions {
+        width: 100%;
+      }
+
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-header">
+    <div class="dashboard-container">
+      <div class="header-content">
+        <div class="member-info">
+          <h1>Welcome, <span id="member-name">Member</span>!</h1>
+          <p id="member-email"></p>
+        </div>
+        <div class="header-actions">
+          <div class="language-select">
+            <select id="language-select" style="cursor: pointer; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+              <option value="en">English</option>
+              <option value="hu">Hungarian</option>
+              <option value="am">Amharic</option>
+            </select>
+          </div>
+          <button class="logout-button" id="logout-button">Logout</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    <!-- Events Section -->
+    <div class="dashboard-section">
+      <h2 data-i18n="dashboardEvents">Upcoming Events</h2>
+      <div id="events-container" class="section-grid"></div>
+    </div>
+
+    <!-- Prayers Section -->
+    <div class="dashboard-section">
+      <h2 data-i18n="dashboardPrayers">Prayer Schedule</h2>
+      <div id="prayers-container" class="section-grid"></div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="dashboard-section">
+      <h2 data-i18n="dashboardResources">Community Resources</h2>
+      <div class="nav-links">
+        <a href="/" data-i18n="navHome">← Back to Home</a>
+        <a href="/community" data-i18n="navCommunity">Community Center</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Translation system
+    const translations = {
+      en: {
+        dashboardEvents: 'Upcoming Events',
+        dashboardPrayers: 'Prayer Schedule',
+        dashboardResources: 'Community Resources',
+        navHome: '← Back to Home',
+        navCommunity: 'Community Center',
+        noEvents: 'No upcoming events at this time.',
+        noPrayers: 'No scheduled prayers at this time.',
+        loading: 'Loading...',
+        eventTime: 'Time',
+        location: 'Location',
+        details: 'Details',
+      },
+      hu: {
+        dashboardEvents: 'Közelgő Események',
+        dashboardPrayers: 'Imadság Ütemezzés',
+        dashboardResources: 'Közösségi Erőforrások',
+        navHome: '← Vissza a Főoldalra',
+        navCommunity: 'Közösségi Központ',
+        noEvents: 'Jelenleg nincsenek közelgő események.',
+        noPrayers: 'Jelenleg nincsenek ütemezett imádságok.',
+        loading: 'Betöltés...',
+        eventTime: 'Idő',
+        location: 'Hely',
+        details: 'Részletek',
+      },
+      am: {
+        dashboardEvents: 'መጪ ክስተቶች',
+        dashboardPrayers: 'ሕይወት ሳዕት',
+        dashboardResources: 'ማህበረሰብ ሀብቶች',
+        navHome: '← ወደ መነሻ ድረ-ገጽ ተመለሳ',
+        navCommunity: 'ማህበረሰብ ሕንፃ',
+        noEvents: 'በአሁኑ ጊዜ ምንም ክስተቶች የሉም።',
+        noPrayers: 'በአሁኑ ጊዜ ምንም ተቀምጠው ሕይወት የሉም።',
+        loading: 'በመጫን...',
+        eventTime: 'ሰዓት',
+        location: 'ቦታ',
+        details: 'ዝርዝሮች',
+      }
+    };
+
+    // Load saved language preference
+    function loadLanguagePreference() {
+      const saved = localStorage.getItem('preferredLanguage');
+      return saved || 'en';
+    }
+
+    // Apply translations
+    function applyTranslations(lang) {
+      document.querySelectorAll('[data-i18n]').forEach(element => {
+        const key = element.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          element.textContent = translations[lang][key];
+        }
+      });
+      localStorage.setItem('preferredLanguage', lang);
+    }
+
+    // Initialize
+    const languageSelect = document.getElementById('language-select');
+    const currentLang = loadLanguagePreference();
+    languageSelect.value = currentLang;
+    applyTranslations(currentLang);
+
+    languageSelect.addEventListener('change', (e) => {
+      applyTranslations(e.target.value);
+    });
+
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const response = await fetch('/api/members/session', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          window.location.href = '/login';
+          return;
+        }
+
+        const data = await response.json();
+        document.getElementById('member-name').textContent = data.member.fullName;
+        document.getElementById('member-email').textContent = data.member.email;
+
+        loadEvents();
+        loadPrayers();
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        window.location.href = '/login';
+      }
+    }
+
+    // Load events
+    async function loadEvents() {
+      try {
+        const response = await fetch('/api/public/events');
+        const events = await response.json();
+
+        const container = document.getElementById('events-container');
+        
+        if (!events || events.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📅</div><p data-i18n="noEvents">No upcoming events at this time.</p></div>`;
+          return;
+        }
+
+        container.innerHTML = events
+          .map(event => `
+            <div class="card">
+              <h3>${event.title}</h3>
+              <p>${event.details}</p>
+              ${event.location ? `<p><strong>Location:</strong> ${event.location}</p>` : ''}
+              <div class="event-time">
+                <strong>${event.eventStartTime || ''}${event.eventEndTime ? ` - ${event.eventEndTime}` : ''}</strong>
+              </div>
+              ${event.externalLink ? `<p><a href="${event.externalLink}" target="_blank" style="color: #c41e3a; text-decoration: none;">View Details →</a></p>` : ''}
+              <div class="card-meta">Category: ${event.category}</div>
+            </div>
+          `)
+          .join('');
+      } catch (error) {
+        console.error('Failed to load events:', error);
+        document.getElementById('events-container').innerHTML = '<div class="empty-state"><p>Failed to load events</p></div>';
+      }
+    }
+
+    // Load prayers
+    async function loadPrayers() {
+      try {
+        const response = await fetch('/api/public/prayers');
+        const prayers = await response.json();
+
+        const container = document.getElementById('prayers-container');
+        
+        if (!prayers || prayers.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🙏</div><p data-i18n="noPrayers">No scheduled prayers at this time.</p></div>`;
+          return;
+        }
+
+        container.innerHTML = prayers
+          .map(prayer => `
+            <div class="card">
+              <h3>${prayer.title}</h3>
+              <p><strong>${prayer.scheduledFor}</strong></p>
+              <p>${prayer.content}</p>
+              <div class="card-meta">Category: ${prayer.category}</div>
+            </div>
+          `)
+          .join('');
+      } catch (error) {
+        console.error('Failed to load prayers:', error);
+        document.getElementById('prayers-container').innerHTML = '<div class="empty-state"><p>Failed to load prayers</p></div>';
+      }
+    }
+
+    // Logout
+    document.getElementById('logout-button').addEventListener('click', async () => {
+      try {
+        await fetch('/api/members/logout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Logout failed:', error);
+        window.location.href = '/';
+      }
+    });
+
+    // Initialize on load
+    checkAuth();
+  </script>
+</body>
+</html>
