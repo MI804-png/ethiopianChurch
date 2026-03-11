@@ -810,6 +810,16 @@ h3,
     grid-template-columns: 1fr;
   }
 
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gallery-card img {
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+    height: auto;
+  }
+
   .topbar__content {
     justify-content: flex-start;
     flex-direction: column;
@@ -888,6 +898,10 @@ h3,
 
   .language-switch select {
     width: 56%;
+  }
+
+  .gallery-card img {
+    aspect-ratio: 3 / 2;
   }
 }
 

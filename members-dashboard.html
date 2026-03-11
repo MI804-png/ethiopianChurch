@@ -419,7 +419,12 @@
     async function loadPrayers() {
       try {
         const response = await fetch('/api/public/prayers');
-        const prayers = await response.json();
+        if (!response.ok) {
+          throw new Error('Prayer request failed');
+        }
+
+        const payload = await response.json();
+        const prayers = Array.isArray(payload?.prayers) ? payload.prayers : [];
 
         const container = document.getElementById('prayers-container');
         
