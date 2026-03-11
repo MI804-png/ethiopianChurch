@@ -73,6 +73,7 @@ const dbPath = path.join(dataDir, 'church.db');
 const jwtSecret = process.env.JWT_SECRET || 'budapest-medhane-alem-secret';
 const adminUsername = process.env.ADMIN_USERNAME || 'admin';
 const adminPassword = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+const adminSessionDays = Math.min(Math.max(Number(process.env.ADMIN_SESSION_DAYS || 30), 1), 90);
 const port = Number(process.env.PORT || 3000);
 
 fs.mkdirSync(dataDir, { recursive: true });
@@ -285,7 +286,7 @@ app.get('/login', sendRootFile('login.html'));
 app.get('/members-dashboard', sendRootFile('members-dashboard.html'));
 
 const issueAdminToken = (payload: JwtPayload) =>
-  jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
+  jwt.sign(payload, jwtSecret, { expiresIn: `${adminSessionDays}d` });
 
 const issueMemberToken = (payload: MemberJwtPayload) =>
   jwt.sign(payload, jwtSecret, { expiresIn: '14d' });
@@ -621,7 +622,7 @@ app.post('/api/admin/login', (req: Request<unknown, unknown, { username?: string
     httpOnly: true,
     sameSite: 'lax',
     secure: false,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: adminSessionDays * 24 * 60 * 60 * 1000,
   });
 
   writeActivityLog({
