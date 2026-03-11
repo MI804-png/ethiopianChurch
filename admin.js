@@ -50,6 +50,9 @@ async function api(url, options = {}) {
   const payload = hasJson ? await response.json() : null;
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      forceRelogin(payload?.error || 'Session expired. Please sign in again.');
+    }
     throw new Error(payload?.error || payload?.message || 'Request failed.');
   }
 
@@ -65,6 +68,13 @@ function setAuthenticated(session) {
 function setLoggedOut() {
   dashboard.hidden = true;
   authCard.hidden = false;
+}
+
+function forceRelogin(message = 'Session expired. Please sign in again.') {
+  setLoggedOut();
+  if (loginFeedback) {
+    loginFeedback.textContent = message;
+  }
 }
 
 function fillPrayerForm(prayer) {
@@ -651,6 +661,9 @@ if (eventForm && eventFeedback) {
       const payload = hasJson ? await response.json() : null;
 
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          forceRelogin(payload?.error || 'Session expired. Please sign in again.');
+        }
         throw new Error(payload?.error || payload?.message || 'Event save failed.');
       }
 
