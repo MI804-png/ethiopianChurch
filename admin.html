@@ -13,27 +13,36 @@
   <div class="site-shell">
     <header class="topbar">
       <div class="container topbar__content">
-        <p>Protected administrator workspace</p>
-        <p><a href="/">Return to public website</a></p>
+        <p data-i18n="adminTopbar">Protected administrator workspace</p>
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <label class="language-switch" for="admin-language-select">
+            <span data-i18n="languageLabel">Language</span>
+            <select id="admin-language-select" aria-label="Language selector">
+              <option value="en">English</option>
+              <option value="hu">Magyar</option>
+            </select>
+          </label>
+          <p><a href="/" data-i18n="adminReturnToSite">Return to public website</a></p>
+        </div>
       </div>
     </header>
 
     <main class="section">
       <div class="container admin-shell">
         <section class="admin-auth-card" id="admin-auth-card">
-          <p class="section-tag">Administrator login</p>
-          <h1>Manage prayers, registrations, and visitors</h1>
-          <p>Only the administrator should know the login credentials for this dashboard.</p>
+          <p class="section-tag" data-i18n="adminLoginTag">Administrator login</p>
+          <h1 data-i18n="adminLoginTitle">Manage prayers, registrations, and visitors</h1>
+          <p data-i18n="adminLoginDesc">Only the administrator should know the login credentials for this dashboard.</p>
           <form class="contact-form" id="admin-login-form">
             <label>
-              <span>Username</span>
-              <input type="text" name="username" placeholder="Admin username" required>
+              <span data-i18n="adminUsernameLabel">Username</span>
+              <input type="text" name="username" data-i18n-placeholder="adminUsernamePlaceholder" placeholder="Admin username" required>
             </label>
             <label>
-              <span>Password</span>
-              <input type="password" name="password" placeholder="Admin password" required>
+              <span data-i18n="adminPasswordLabel">Password</span>
+              <input type="password" name="password" data-i18n-placeholder="adminPasswordPlaceholder" placeholder="Admin password" required>
             </label>
-            <button class="button button--primary" type="submit">Sign in</button>
+            <button class="button button--primary" type="submit" data-i18n="adminSignIn">Sign in</button>
             <p class="form-feedback" id="admin-login-feedback" role="status" aria-live="polite"></p>
           </form>
         </section>
@@ -41,54 +50,99 @@
         <section class="admin-dashboard" id="admin-dashboard" hidden>
           <div class="admin-header">
             <div>
-              <p class="section-tag">Dashboard</p>
-              <h1>Budapest Medhane Alem Church Admin</h1>
+              <p class="section-tag" data-i18n="adminDashboardTag">Dashboard</p>
+              <h1 data-i18n="adminDashboardTitle">Budapest Medhane Alem Church Admin</h1>
             </div>
             <div class="admin-header__actions">
               <span class="admin-pill" id="admin-identity"></span>
-              <button class="button button--secondary" id="logout-button" type="button">Logout</button>
+              <button class="button button--secondary" id="logout-button" type="button" data-i18n="adminLogout">Logout</button>
             </div>
           </div>
 
           <div class="admin-stats" id="admin-stats"></div>
 
+          <section class="admin-card admin-card--wide">
+            <div class="admin-card__header">
+              <div>
+                <p class="section-tag" data-i18n="adminHomeEditorTag">Homepage content editor</p>
+                <h2 data-i18n="adminHomeEditorTitle">Edit any text on the home page</h2>
+                <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0 0 0;" data-i18n="adminHomeEditorDesc">Load the current home page sources, edit text, then save. Changes apply immediately.</p>
+              </div>
+              <div class="admin-header__actions">
+                <button class="button button--secondary" id="homepage-editor-load" type="button" data-i18n="adminHomeEditorLoad">Load latest</button>
+              </div>
+            </div>
+            <form class="contact-form" id="homepage-text-replace-form">
+              <label>
+                <span data-i18n="adminHomeReplaceFindLabel">Text currently shown on the website</span>
+                <textarea id="homepage-replace-find" name="findText" rows="4" placeholder="Paste the exact text you want to change" required></textarea>
+              </label>
+              <label>
+                <span data-i18n="adminHomeReplaceWithLabel">New text</span>
+                <textarea id="homepage-replace-with" name="replaceText" rows="4" placeholder="Write the new text here" required></textarea>
+              </label>
+              <div class="admin-form-actions">
+                <button class="button button--primary" type="submit" data-i18n="adminHomeReplaceSave">Replace text and save</button>
+              </div>
+              <p class="form-feedback" id="homepage-text-replace-feedback" role="status" aria-live="polite"></p>
+            </form>
+
+            <details style="margin-top: 1.5rem;">
+              <summary style="cursor: pointer; font-weight: 700;" data-i18n="adminHomeEditorAdvanced">Advanced source editor</summary>
+            <form class="contact-form" id="homepage-editor-form">
+              <label>
+                <span data-i18n="adminHomeEditorIndexLabel">Home HTML source (index.html)</span>
+                <textarea id="homepage-index-source" name="indexHtml" rows="14" spellcheck="false" placeholder="index.html content" required></textarea>
+              </label>
+              <label>
+                <span data-i18n="adminHomeEditorScriptLabel">Home script source (script.js)</span>
+                <textarea id="homepage-script-source" name="scriptJs" rows="14" spellcheck="false" placeholder="script.js content" required></textarea>
+              </label>
+              <div class="admin-form-actions">
+                <button class="button button--primary" type="submit" data-i18n="adminHomeEditorSave">Save homepage text</button>
+              </div>
+              <p class="form-feedback" id="homepage-editor-feedback" role="status" aria-live="polite"></p>
+            </form>
+            </details>
+          </section>
+
           <div class="admin-grid">
             <section class="admin-card">
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">Prayer management</p>
-                  <h2>Add, edit, or delete prayers</h2>
+                  <p class="section-tag" data-i18n="adminPrayerTag">Prayer management</p>
+                  <h2 data-i18n="adminPrayerTitle">Add, edit, or delete prayers</h2>
                 </div>
               </div>
               <form class="contact-form" id="prayer-form">
                 <input type="hidden" name="id">
                 <label>
-                  <span>Prayer title</span>
-                  <input type="text" name="title" placeholder="Prayer title" required>
+                  <span data-i18n="adminPrayerTitleLabel">Prayer title</span>
+                  <input type="text" name="title" data-i18n-placeholder="adminPrayerTitlePlaceholder" placeholder="Prayer title" required>
                 </label>
                 <label>
-                  <span>Category</span>
-                  <input type="text" name="category" placeholder="Weekly Prayer, Feast Day, Community" required>
+                  <span data-i18n="adminPrayerCategoryLabel">Category</span>
+                  <input type="text" name="category" data-i18n-placeholder="adminPrayerCategoryPlaceholder" placeholder="Weekly Prayer, Feast Day, Community" required>
                 </label>
                 <label>
-                  <span>Scheduled time</span>
-                  <input type="text" name="scheduledFor" placeholder="Every Sunday, 6:00 - 10:30" required>
+                  <span data-i18n="adminPrayerScheduledLabel">Scheduled time</span>
+                  <input type="text" name="scheduledFor" data-i18n-placeholder="adminPrayerScheduledPlaceholder" placeholder="Every Sunday, 6:00 - 10:30" required>
                 </label>
                 <label>
-                  <span>Description</span>
-                  <textarea name="content" rows="5" placeholder="Prayer details" required></textarea>
+                  <span data-i18n="adminPrayerDescLabel">Description</span>
+                  <textarea name="content" rows="5" data-i18n-placeholder="adminPrayerDescPlaceholder" placeholder="Prayer details" required></textarea>
                 </label>
                 <div class="admin-form-actions">
-                  <button class="button button--primary" type="submit">Save prayer</button>
-                  <button class="button button--secondary" id="prayer-reset" type="button">Reset</button>
+                  <button class="button button--primary" type="submit" data-i18n="adminPrayerSave">Save prayer</button>
+                  <button class="button button--secondary" id="prayer-reset" type="button" data-i18n="adminPrayerReset">Reset</button>
                 </div>
                 <p class="form-feedback" id="prayer-feedback" role="status" aria-live="polite"></p>
               </form>
               <div class="admin-list" id="prayer-admin-list"></div>
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">Prayer trash</p>
-                  <h2>Restore mistakenly deleted prayers</h2>
+                  <p class="section-tag" data-i18n="adminPrayerTrashTag">Prayer trash</p>
+                  <h2 data-i18n="adminPrayerTrashTitle">Restore mistakenly deleted prayers</h2>
                 </div>
               </div>
               <div class="admin-list" id="prayer-trash-list"></div>
@@ -97,58 +151,58 @@
             <section class="admin-card admin-card--wide">
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">Event management</p>
-                  <h2>Create church events with time, date, files, and details</h2>
+                  <p class="section-tag" data-i18n="adminEventTag">Event management</p>
+                  <h2 data-i18n="adminEventTitle">Create church events with time, date, files, and details</h2>
                 </div>
-                <button class="button button--secondary" id="event-new-button" type="button">Add new event</button>
+                <button class="button button--secondary" id="event-new-button" type="button" data-i18n="adminEventNewButton">Add new event</button>
               </div>
               <form class="contact-form" id="event-form" enctype="multipart/form-data">
                 <input type="hidden" name="id">
                 <input type="hidden" name="removeDocument" value="false">
                 <label>
-                  <span>Event title</span>
-                  <input type="text" name="title" placeholder="Church event title" required>
+                  <span data-i18n="adminEventTitleLabel">Event title</span>
+                  <input type="text" name="title" data-i18n-placeholder="adminEventTitlePlaceholder" placeholder="Church event title" required>
                 </label>
                 <label>
-                  <span>Category</span>
-                  <input type="text" name="category" placeholder="Liturgy, Conference, Youth, Memorial" required>
+                  <span data-i18n="adminEventCategoryLabel">Category</span>
+                  <input type="text" name="category" data-i18n-placeholder="adminEventCategoryPlaceholder" placeholder="Liturgy, Conference, Youth, Memorial" required>
                 </label>
                 <label>
-                  <span>Date</span>
+                  <span data-i18n="adminEventDateLabel">Date</span>
                   <input type="date" name="eventDate" required>
                 </label>
                 <label>
-                  <span>Start time</span>
+                  <span data-i18n="adminEventStartTimeLabel">Start time</span>
                   <input type="time" name="eventStartTime" required>
                 </label>
                 <label>
-                  <span>End time</span>
+                  <span data-i18n="adminEventEndTimeLabel">End time</span>
                   <input type="time" name="eventEndTime" required>
                 </label>
                 <label>
-                  <span>Location</span>
-                  <input type="text" name="location" placeholder="Budapest Medhane Alem Church or other venue">
+                  <span data-i18n="adminEventLocationLabel">Location</span>
+                  <input type="text" name="location" data-i18n-placeholder="adminEventLocationPlaceholder" placeholder="Budapest Medhane Alem Church or other venue">
                 </label>
                 <label>
-                  <span>External link</span>
-                  <input type="url" name="externalLink" placeholder="https://event page or livestream link">
+                  <span data-i18n="adminEventExternalLinkLabel">External link</span>
+                  <input type="url" name="externalLink" data-i18n-placeholder="adminEventExternalLinkPlaceholder" placeholder="https://event page or livestream link">
                 </label>
                 <label>
-                  <span>Upload document</span>
+                  <span data-i18n="adminEventDocumentLabel">Upload document</span>
                   <input type="file" name="document" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png">
                 </label>
                 <p class="admin-attachment-note" id="event-document-status"></p>
                 <label class="checkbox-row">
                   <input type="checkbox" name="isPublished" checked>
-                  <span>Post this event to users</span>
+                  <span data-i18n="adminEventPublishCheckbox">Post this event to users</span>
                 </label>
                 <label>
-                  <span>Details</span>
-                  <textarea name="details" rows="5" placeholder="Event details, schedule, and instructions" required></textarea>
+                  <span data-i18n="adminEventDetailsLabel">Details</span>
+                  <textarea name="details" rows="5" data-i18n-placeholder="adminEventDetailsPlaceholder" placeholder="Event details, schedule, and instructions" required></textarea>
                 </label>
                 <div class="admin-form-actions">
-                  <button class="button button--primary" type="submit">Save event</button>
-                  <button class="button button--secondary" id="event-reset" type="button">Reset</button>
+                  <button class="button button--primary" type="submit" data-i18n="adminEventSave">Save event</button>
+                  <button class="button button--secondary" id="event-reset" type="button" data-i18n="adminEventReset">Reset</button>
                 </div>
                 <p class="form-feedback" id="event-feedback" role="status" aria-live="polite"></p>
               </form>
@@ -158,9 +212,9 @@
             <section class="admin-card">
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">Community approvals</p>
-                  <h2>Review and accept registrations</h2>
-                  <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0 0 0;">New registrations require your approval before members can access the portal.</p>
+                  <p class="section-tag" data-i18n="adminRegTag">Community approvals</p>
+                  <h2 data-i18n="adminRegTitle">Review and accept registrations</h2>
+                  <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0 0 0;" data-i18n="adminRegDesc">New registrations require your approval before members can access the portal.</p>
                 </div>
               </div>
               <div class="admin-list" id="registration-list"></div>
@@ -169,20 +223,20 @@
             <section class="admin-card">
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">Community access links</p>
-                  <h2>Generate member-only share links</h2>
+                  <p class="section-tag" data-i18n="adminMemberLinksTag">Community access links</p>
+                  <h2 data-i18n="adminMemberLinksTitle">Generate member-only share links</h2>
                 </div>
               </div>
               <form class="contact-form" id="member-link-form">
                 <label>
-                  <span>Approved member</span>
+                  <span data-i18n="adminMemberSelect">Approved member</span>
                   <select name="userId" id="member-select" required></select>
                 </label>
                 <label>
-                  <span>Expiry (days)</span>
+                  <span data-i18n="adminMemberExpiry">Expiry (days)</span>
                   <input type="number" name="expiresInDays" min="1" max="60" value="7" required>
                 </label>
-                <button class="button button--primary" type="submit">Generate link</button>
+                <button class="button button--primary" type="submit" data-i18n="adminMemberGenerateLink">Generate link</button>
                 <p class="form-feedback" id="member-link-feedback" role="status" aria-live="polite"></p>
               </form>
               <div class="admin-list" id="member-links-list"></div>
@@ -191,31 +245,31 @@
             <section class="admin-card admin-card--wide">
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">Community resources</p>
-                  <h2>Add prayer documents or post videos</h2>
+                  <p class="section-tag" data-i18n="adminResourceTag">Community resources</p>
+                  <h2 data-i18n="adminResourceTitle">Add prayer documents or post videos</h2>
                 </div>
               </div>
               <form class="contact-form" id="resource-form">
                 <label>
-                  <span>Resource title</span>
-                  <input type="text" name="title" placeholder="Prayer PDF or teaching video title" required>
+                  <span data-i18n="adminResourceTitleLabel">Resource title</span>
+                  <input type="text" name="title" data-i18n-placeholder="adminResourceTitlePlaceholder" placeholder="Prayer PDF or teaching video title" required>
                 </label>
                 <label>
-                  <span>Type</span>
+                  <span data-i18n="adminResourceTypeLabel">Type</span>
                   <select name="type" required>
-                    <option value="document">Document</option>
-                    <option value="video">Video</option>
+                    <option value="document" data-i18n="adminResourceTypeDocument">Document</option>
+                    <option value="video" data-i18n="adminResourceTypeVideo">Video</option>
                   </select>
                 </label>
                 <label>
-                  <span>URL</span>
+                  <span data-i18n="adminResourceUrlLabel">URL</span>
                   <input type="url" name="url" placeholder="https://..." required>
                 </label>
                 <label>
-                  <span>Description</span>
-                  <textarea name="description" rows="4" placeholder="Optional description"></textarea>
+                  <span data-i18n="adminResourceDescLabel">Description</span>
+                  <textarea name="description" rows="4" data-i18n-placeholder="adminResourceDescPlaceholder" placeholder="Optional description"></textarea>
                 </label>
-                <button class="button button--primary" type="submit">Publish resource</button>
+                <button class="button button--primary" type="submit" data-i18n="adminResourcePublish">Publish resource</button>
                 <p class="form-feedback" id="resource-feedback" role="status" aria-live="polite"></p>
               </form>
               <div class="admin-list" id="resource-list"></div>
@@ -224,19 +278,45 @@
             <section class="admin-card admin-card--wide">
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">Visitor log</p>
-                  <h2>Recent website entries</h2>
+                  <p class="section-tag" data-i18n="adminGalleryTag">Gallery management</p>
+                  <h2 data-i18n="adminGalleryTitle">Upload photos and videos for the home gallery</h2>
+                </div>
+              </div>
+              <form class="contact-form" id="gallery-form" enctype="multipart/form-data">
+                <label>
+                  <span data-i18n="adminGalleryMediaLabel">Media file</span>
+                  <input type="file" name="media" accept="image/*,video/*" required>
+                </label>
+                <label>
+                  <span data-i18n="adminGalleryItemTitleLabel">Title</span>
+                  <input type="text" name="title" placeholder="Gallery item title" required>
+                </label>
+                <label>
+                  <span data-i18n="adminGalleryCaptionLabel">Caption</span>
+                  <textarea name="caption" rows="3" placeholder="Optional caption"></textarea>
+                </label>
+                <button class="button button--primary" type="submit" data-i18n="adminGalleryUpload">Upload to gallery</button>
+                <p class="form-feedback" id="gallery-feedback" role="status" aria-live="polite"></p>
+              </form>
+              <div class="admin-list" id="gallery-list"></div>
+            </section>
+
+            <section class="admin-card admin-card--wide">
+              <div class="admin-card__header">
+                <div>
+                  <p class="section-tag" data-i18n="adminVisitorTag">Visitor log</p>
+                  <h2 data-i18n="adminVisitorTitle">Recent website entries</h2>
                 </div>
               </div>
               <div class="visitor-table-wrap">
                 <table class="visitor-table">
                   <thead>
                     <tr>
-                      <th>Time</th>
-                      <th>Page</th>
-                      <th>Referrer</th>
-                      <th>IP</th>
-                      <th>User agent</th>
+                      <th data-i18n="adminVisitorTime">Time</th>
+                      <th data-i18n="adminVisitorPage">Page</th>
+                      <th data-i18n="adminVisitorReferrer">Referrer</th>
+                      <th data-i18n="adminVisitorIP">IP</th>
+                      <th data-i18n="adminVisitorUA">User agent</th>
                     </tr>
                   </thead>
                   <tbody id="visitor-list"></tbody>
@@ -247,22 +327,22 @@
             <section class="admin-card admin-card--wide">
               <div class="admin-card__header">
                 <div>
-                  <p class="section-tag">All logs</p>
-                  <h2>Unified system activity log</h2>
+                  <p class="section-tag" data-i18n="adminLogTag">All logs</p>
+                  <h2 data-i18n="adminLogTitle">Unified system activity log</h2>
                 </div>
               </div>
               <div class="visitor-table-wrap">
                 <table class="visitor-table">
                   <thead>
                     <tr>
-                      <th>Time</th>
-                      <th>Source</th>
-                      <th>Event</th>
-                      <th>Actor</th>
-                      <th>Method</th>
-                      <th>Path</th>
-                      <th>Status</th>
-                      <th>Details</th>
+                      <th data-i18n="adminLogTime">Time</th>
+                      <th data-i18n="adminLogSource">Source</th>
+                      <th data-i18n="adminLogEvent">Event</th>
+                      <th data-i18n="adminLogActor">Actor</th>
+                      <th data-i18n="adminLogMethod">Method</th>
+                      <th data-i18n="adminLogPath">Path</th>
+                      <th data-i18n="adminLogStatus">Status</th>
+                      <th data-i18n="adminLogDetails">Details</th>
                     </tr>
                   </thead>
                   <tbody id="system-log-list"></tbody>

@@ -41,12 +41,10 @@
           <a href="#identity" data-i18n="navIdentity">Identity</a>
           <a href="#worship" data-i18n="navWorship">Worship</a>
           <a href="#prayers" data-i18n="navPrayers">Prayers</a>
-          <a href="#community" data-i18n="navCommunity">Community</a>
-          <a href="/community">Portal</a>
           <a href="#ministries" data-i18n="navMinistries">Ministries</a>
           <a href="#gallery" data-i18n="navGallery">Gallery</a>
           <a href="#contact" data-i18n="navContact">Contact</a>
-          <a href="/login" data-i18n="navLogin">Login</a>
+          <a href="#contact" data-i18n="navBecomeMember">Do you want to be a member?</a>
           <a href="/admin" data-i18n="navAdmin">Admin</a>
         </nav>
         <label class="language-switch" for="language-select">
@@ -210,20 +208,6 @@
             <h2 data-i18n="prayerTitle">Admin-managed prayer schedule and announcements</h2>
             <p data-i18n="prayerDesc">Prayer items published by the church administrator appear here with their scheduled time and can be shared across social media platforms.</p>
           </div>
-          <div class="prayer-stats reveal">
-            <article>
-              <span>Community registrations</span>
-              <strong id="stat-total-members">0</strong>
-            </article>
-            <article>
-              <span>Approved members</span>
-              <strong id="stat-approved-members">0</strong>
-            </article>
-            <article>
-              <span>Pending approvals</span>
-              <strong id="stat-pending-members">0</strong>
-            </article>
-          </div>
           <div class="prayer-list" id="prayer-list"></div>
           <p class="empty-state reveal" id="prayer-empty" data-i18n="prayerEmpty">No prayers have been published yet.</p>
         </div>
@@ -272,70 +256,14 @@
         </div>
       </section>
 
-      <section class="section" id="community">
-        <div class="container community-grid">
-          <div class="community-panel reveal">
-            <p class="section-tag" data-i18n="communityTag">Community registration</p>
-            <h2 data-i18n="communityTitle">Register for the church community</h2>
-            <p data-i18n="communityIntro">Visitors and community members can request registration here. Requests stay pending until the administrator reviews and accepts them.</p>
-            <div class="community-benefits">
-              <article>
-                <strong data-i18n="communityBenefit1Title">Admin approval flow</strong>
-                <p data-i18n="communityBenefit1Desc">Each registration is reviewed before approval.</p>
-              </article>
-              <article>
-                <strong data-i18n="communityBenefit2Title">Community visibility</strong>
-                <p data-i18n="communityBenefit2Desc">The administrator can monitor who has joined and who is still pending.</p>
-              </article>
-              <article>
-                <strong data-i18n="communityBenefit3Title">Responsible communication</strong>
-                <p data-i18n="communityBenefit3Desc">Prayer updates can be published and shared from the official site.</p>
-              </article>
-            </div>
-          </div>
-          <form class="contact-form community-form reveal reveal-delay" id="community-form">
-            <label>
-              <span data-i18n="fieldFullName">Full name</span>
-              <input type="text" name="fullName" placeholder="Your full name" data-i18n-placeholder="placeholderFullName" required>
-            </label>
-            <label>
-              <span data-i18n="fieldEmail">Email address</span>
-              <input type="email" name="email" placeholder="you@example.com" required>
-            </label>
-            <label>
-              <span data-i18n="fieldPhone">Phone number</span>
-              <input type="text" name="phone" placeholder="Phone number" data-i18n-placeholder="placeholderPhone">
-            </label>
-            <label>
-              <span data-i18n="fieldCity">City</span>
-              <input type="text" name="city" placeholder="Budapest or your city" data-i18n-placeholder="placeholderCity">
-            </label>
-            <label>
-              <span data-i18n="fieldMessage">Message</span>
-              <textarea name="message" rows="5" placeholder="Tell the church administration how you would like to join" data-i18n-placeholder="placeholderJoinMessage"></textarea>
-            </label>
-            <button class="button button--primary" type="submit" data-i18n="communitySubmit">Register for approval</button>
-            <p class="form-feedback" id="community-feedback" role="status" aria-live="polite"></p>
-          </form>
-        </div>
-      </section>
-
       <section class="section" id="gallery">
         <div class="container">
           <div class="section-heading reveal">
             <p class="section-tag" data-i18n="galleryTag">Church image gallery</p>
             <h2 data-i18n="galleryTitle">A visual presentation of faith, dignity, and parish identity</h2>
           </div>
-          <div class="gallery-grid">
-            <figure class="gallery-card gallery-card--large reveal">
-              <img src="assets/images/christ-portrait.jpeg" data-i18n-alt="galleryImg1Alt" alt="Portrait image used in the church website design">
-              <figcaption data-i18n="galleryImg1Caption">Sacred visual identity for the Budapest Medhane Alem Church</figcaption>
-            </figure>
-            <figure class="gallery-card reveal reveal-delay">
-              <img src="assets/images/church-image.jpeg" data-i18n-alt="galleryImg2Alt" alt="Secondary church-related image used in the website">
-              <figcaption data-i18n="galleryImg2Caption">Supporting parish image for the official public website</figcaption>
-            </figure>
-          </div>
+          <div class="gallery-grid" id="gallery-list"></div>
+          <p class="empty-state reveal" id="gallery-empty" data-i18n="galleryEmpty">No gallery media uploaded yet.</p>
         </div>
       </section>
 
@@ -357,9 +285,14 @@
                 <span data-i18n="contactPublicUseLabel">Public use</span>
                 <strong data-i18n="contactPublicUseValue">Church information, identity, and verification</strong>
               </article>
+              <article>
+                <span data-i18n="contactEmailLabel">Email contact</span>
+                <strong><a href="mailto:budapesteotc@gmail.com">budapesteotc@gmail.com</a></strong>
+              </article>
             </div>
             <div class="contact-actions">
               <a class="button button--primary" href="https://www.google.com/maps?q=Tbiliszi+t%C3%A9r,+Budapest,+1087" target="_blank" rel="noreferrer" data-i18n="mapsBtn">Open in Maps</a>
+              <a class="button button--secondary" href="mailto:budapesteotc@gmail.com" data-i18n="contactEmailBtn">Send Email</a>
               <a class="button button--secondary" href="#home" data-i18n="backTopBtn">Back to Top</a>
             </div>
           </div>
@@ -422,7 +355,6 @@
         <div>
           <p class="footer-title" data-i18n="footerAdmin">Administration</p>
           <p><a href="/admin" data-i18n="footerAdminLink">Open the protected admin dashboard</a></p>
-          <p><a href="/community">Open community portal</a></p>
         </div>
       </div>
       <div class="container footer-bottom">

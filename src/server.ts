@@ -65,6 +65,11 @@ type EventPayload = {
   removeDocument?: string;
 };
 
+type GalleryPayload = {
+  title?: string;
+  caption?: string;
+};
+
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(currentDir, '..');
 
@@ -85,6 +90,8 @@ function resolveRuntimePath(configuredPath: string | undefined, fallbackPath: st
 const dataDir = resolveRuntimePath(process.env.DATA_DIR, path.join(projectRoot, 'data'));
 const uploadsDir = resolveRuntimePath(process.env.UPLOADS_DIR, path.join(projectRoot, 'uploads'));
 const eventUploadsDir = path.join(uploadsDir, 'events');
+const galleryUploadsDir = path.join(uploadsDir, 'gallery');
+const homepageContentPath = path.join(dataDir, 'homepage-content.json');
 const dbPath = path.join(dataDir, 'church.db');
 const jwtSecret = process.env.JWT_SECRET || 'budapest-medhane-alem-secret';
 const adminUsername = process.env.ADMIN_USERNAME || 'admin';
@@ -94,6 +101,7 @@ const port = Number(process.env.PORT || 3000);
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(eventUploadsDir, { recursive: true });
+fs.mkdirSync(galleryUploadsDir, { recursive: true });
 
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
@@ -187,6 +195,18 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS gallery_media (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    caption TEXT,
+    media_type TEXT NOT NULL CHECK(media_type IN ('image', 'video')),
+    media_url TEXT NOT NULL,
+    original_name TEXT,
+    created_by INTEGER,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 const eventColumns = db.prepare(`PRAGMA table_info(events)`).all() as Array<{ name: string }>;
@@ -223,6 +243,40 @@ const uploadEventDocument = multer({
 
     if (!allowedExtensions.has(extension)) {
       callback(new Error('Unsupported file type. Upload PDF, Office documents, or images.'));
+      return;
+    }
+
+    callback(null, true);
+  },
+});
+
+const galleryStorage = multer.diskStorage({
+  destination: (_req, _file, callback) => {
+    callback(null, galleryUploadsDir);
+  },
+  filename: (_req, file, callback) => {
+    const extension = path.extname(file.originalname || '').toLowerCase();
+    const baseName = path.basename(file.originalname || 'media', extension)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'media';
+    callback(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}-${baseName}${extension}`);
+  },
+});
+
+const uploadGalleryMedia = multer({
+  storage: galleryStorage,
+  limits: {
+    fileSize: 100 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, callback) => {
+    const allowedImageExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
+    const allowedVideoExtensions = new Set(['.mp4', '.webm', '.mov', '.m4v']);
+    const extension = path.extname(file.originalname || '').toLowerCase();
+
+    if (!allowedImageExtensions.has(extension) && !allowedVideoExtensions.has(extension)) {
+      callback(new Error('Unsupported gallery file type. Upload an image or video file.'));
       return;
     }
 
@@ -296,19 +350,63 @@ const sendRootFile = (fileName: string) => (req: Request, res: Response) => {
   res.sendFile(path.join(projectRoot, fileName));
 };
 
-app.get('/', sendRootFile('index.html'));
+type HomepageContent = {
+  indexHtml: string;
+  scriptJs: string;
+};
+
+const readHomepageContent = (): HomepageContent => {
+  const fallback: HomepageContent = {
+    indexHtml: fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8'),
+    scriptJs: fs.readFileSync(path.join(projectRoot, 'script.js'), 'utf8'),
+  };
+
+  if (!fs.existsSync(homepageContentPath)) {
+    return fallback;
+  }
+
+  try {
+    const saved = JSON.parse(fs.readFileSync(homepageContentPath, 'utf8')) as Partial<HomepageContent>;
+    return {
+      indexHtml: typeof saved.indexHtml === 'string' && saved.indexHtml.trim() ? saved.indexHtml : fallback.indexHtml,
+      scriptJs: typeof saved.scriptJs === 'string' && saved.scriptJs.trim() ? saved.scriptJs : fallback.scriptJs,
+    };
+  } catch {
+    return fallback;
+  }
+};
+
+const writeHomepageContent = (content: HomepageContent) => {
+  fs.writeFileSync(homepageContentPath, JSON.stringify(content), 'utf8');
+};
+
+app.get('/', (_req: Request, res: Response) => {
+  const content = readHomepageContent();
+  res.type('html').send(content.indexHtml);
+});
 app.get('/styles.css', sendRootFile('styles.css'));
-app.get('/script.js', sendRootFile('script.js'));
+app.get('/script.js', (_req: Request, res: Response) => {
+  const content = readHomepageContent();
+  res.type('application/javascript').send(content.scriptJs);
+});
 app.get('/admin', sendRootFile('admin.html'));
 app.get('/admin.js', sendRootFile('admin.js'));
-app.get('/community', sendRootFile('community.html'));
-app.get('/community.js', sendRootFile('community.js'));
+app.get('/community', (_req: Request, res: Response) => {
+  res.redirect('/');
+});
+app.get('/community.js', (_req: Request, res: Response) => {
+  res.status(410).type('application/javascript').send('// community portal disabled');
+});
 
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ ok: true });
 });
-app.get('/login', sendRootFile('login.html'));
-app.get('/members-dashboard', sendRootFile('members-dashboard.html'));
+app.get('/login', (_req: Request, res: Response) => {
+  res.redirect('/');
+});
+app.get('/members-dashboard', (_req: Request, res: Response) => {
+  res.redirect('/');
+});
 
 const issueAdminToken = (payload: JwtPayload) =>
   jwt.sign(payload, jwtSecret, { expiresIn: `${adminSessionDays}d` });
@@ -571,42 +669,27 @@ app.get('/api/public/events', (_req: Request, res: Response) => {
   res.json(events);
 });
 
-app.post('/api/public/registrations', (req: Request<unknown, unknown, RegistrationPayload>, res: Response) => {
-  const fullName = req.body.fullName?.trim();
-  const email = req.body.email?.trim().toLowerCase();
-  const phone = req.body.phone?.trim() || '';
-  const city = req.body.city?.trim() || '';
-  const message = req.body.message?.trim() || '';
+app.get('/api/public/gallery', (_req: Request, res: Response) => {
+  const media = db
+    .prepare(
+      `SELECT id,
+              title,
+              caption,
+              media_type as mediaType,
+              media_url as mediaUrl,
+              original_name as originalName,
+              created_at as createdAt,
+              updated_at as updatedAt
+       FROM gallery_media
+       ORDER BY created_at DESC, id DESC`
+    )
+    .all();
 
-  if (!fullName || !email) {
-    res.status(400).json({ error: 'Full name and email are required.' });
-    return;
-  }
+  res.json(media);
+});
 
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email) as { id: number } | undefined;
-  if (existing) {
-    res.status(409).json({ error: 'A registration with this email already exists.' });
-    return;
-  }
-
-  db.prepare(
-    `INSERT INTO users (full_name, email, phone, city, message, role, status)
-     VALUES (?, ?, ?, ?, ?, 'member', 'pending')`
-  ).run(fullName, email, phone, city, message);
-
-  writeActivityLog({
-    eventType: 'registration_submitted',
-    method: 'POST',
-    path: '/api/public/registrations',
-    statusCode: 201,
-    actorRole: 'guest',
-    actorName: email,
-    ipAddress: getClientIp(req) || '',
-    userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-    details: `fullName=${fullName}`,
-  });
-
-  res.status(201).json({ message: 'Registration received and awaiting admin approval.' });
+app.post('/api/public/registrations', (_req: Request<unknown, unknown, RegistrationPayload>, res: Response) => {
+  res.status(403).json({ error: 'Member registration is disabled. Contact the administrator.' });
 });
 
 app.post('/api/admin/login', (req: Request<unknown, unknown, { username?: string; password?: string }>, res: Response) => {
@@ -673,6 +756,40 @@ app.post('/api/admin/logout', (_req: Request, res: Response) => {
 app.get('/api/admin/session', requireAdmin, (_req: Request, res: Response) => {
   res.json({ authenticated: true, admin: res.locals.admin });
 });
+
+app.get('/api/admin/homepage-content', requireAdmin, (_req: Request, res: Response) => {
+  try {
+    res.json(readHomepageContent());
+  } catch {
+    res.status(500).json({ error: 'Unable to load homepage sources.' });
+  }
+});
+
+app.put(
+  '/api/admin/homepage-content',
+  requireAdmin,
+  (req: Request<unknown, unknown, { indexHtml?: string; scriptJs?: string }>, res: Response) => {
+    const indexHtml = typeof req.body.indexHtml === 'string' ? req.body.indexHtml : '';
+    const scriptJs = typeof req.body.scriptJs === 'string' ? req.body.scriptJs : '';
+
+    if (!indexHtml.trim() || !scriptJs.trim()) {
+      res.status(400).json({ error: 'Both index.html and script.js content are required.' });
+      return;
+    }
+
+    if (indexHtml.length > 2_000_000 || scriptJs.length > 2_000_000) {
+      res.status(400).json({ error: 'Submitted content is too large.' });
+      return;
+    }
+
+    try {
+      writeHomepageContent({ indexHtml, scriptJs });
+      res.json({ message: 'Homepage content updated.' });
+    } catch {
+      res.status(500).json({ error: 'Failed to save homepage content.' });
+    }
+  }
+);
 
 app.get('/api/admin/overview', requireAdmin, (_req: Request, res: Response) => {
   const prayerStats = db
@@ -801,6 +918,82 @@ app.get('/api/admin/resources', requireAdmin, (_req: Request, res: Response) => 
   res.json(resources);
 });
 
+app.get('/api/admin/gallery', requireAdmin, (_req: Request, res: Response) => {
+  const media = db
+    .prepare(
+      `SELECT id,
+              title,
+              caption,
+              media_type as mediaType,
+              media_url as mediaUrl,
+              original_name as originalName,
+              created_at as createdAt,
+              updated_at as updatedAt
+       FROM gallery_media
+       ORDER BY created_at DESC, id DESC`
+    )
+    .all();
+
+  res.json(media);
+});
+
+app.post('/api/admin/gallery', requireAdmin, uploadGalleryMedia.single('media'), (req: Request<unknown, unknown, GalleryPayload>, res: Response) => {
+  const title = req.body.title?.trim();
+  const caption = req.body.caption?.trim() || '';
+
+  if (!title || !req.file) {
+    if (req.file) {
+      deleteUploadedFile(`/uploads/gallery/${req.file.filename}`);
+    }
+    res.status(400).json({ error: 'Title and media file are required.' });
+    return;
+  }
+
+  const extension = path.extname(req.file.originalname || '').toLowerCase();
+  const mediaType = ['.mp4', '.webm', '.mov', '.m4v'].includes(extension) ? 'video' : 'image';
+  const mediaUrl = `/uploads/gallery/${req.file.filename}`;
+
+  const result = db
+    .prepare(
+      `INSERT INTO gallery_media (title, caption, media_type, media_url, original_name, created_by)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    )
+    .run(title, caption, mediaType, mediaUrl, req.file.originalname, res.locals.admin.userId);
+
+  const record = db
+    .prepare(
+      `SELECT id,
+              title,
+              caption,
+              media_type as mediaType,
+              media_url as mediaUrl,
+              original_name as originalName,
+              created_at as createdAt,
+              updated_at as updatedAt
+       FROM gallery_media
+       WHERE id = ?`
+    )
+    .get(result.lastInsertRowid);
+
+  res.status(201).json(record);
+});
+
+app.delete('/api/admin/gallery/:id', requireAdmin, (req: Request<{ id: string }>, res: Response) => {
+  const id = Number(req.params.id);
+  const media = db
+    .prepare(`SELECT media_url as mediaUrl FROM gallery_media WHERE id = ?`)
+    .get(id) as { mediaUrl: string } | undefined;
+
+  if (!media) {
+    res.status(404).json({ error: 'Gallery item not found.' });
+    return;
+  }
+
+  deleteUploadedFile(media.mediaUrl);
+  db.prepare('DELETE FROM gallery_media WHERE id = ?').run(id);
+  res.json({ message: 'Gallery item deleted.' });
+});
+
 app.post('/api/admin/resources', requireAdmin, (req: Request<unknown, unknown, CommunityResourcePayload>, res: Response) => {
   const title = req.body.title?.trim();
   const type = req.body.type === 'video' ? 'video' : req.body.type === 'document' ? 'document' : '';
@@ -842,90 +1035,20 @@ app.delete('/api/admin/resources/:id', requireAdmin, (req: Request<{ id: string 
   res.json({ message: 'Resource deleted.' });
 });
 
-app.post('/api/community/auth/link', (req: Request<unknown, unknown, { token?: string }>, res: Response) => {
-  const token = req.body.token?.trim();
-
-  if (!token) {
-    res.status(400).json({ error: 'Access token is required.' });
-    return;
-  }
-
-  const link = db
-    .prepare(
-      `SELECT l.id, l.user_id as userId, l.expires_at as expiresAt, l.used_at as usedAt,
-              u.full_name as fullName, u.email as email, u.status as status
-       FROM community_access_links l
-       JOIN users u ON u.id = l.user_id
-       WHERE l.token = ?
-       LIMIT 1`
-    )
-    .get(token) as {
-      id: number;
-      userId: number;
-      expiresAt: string;
-      usedAt: string | null;
-      fullName: string;
-      email: string;
-      status: string;
-    } | undefined;
-
-  if (!link) {
-    res.status(404).json({ error: 'Access link not found.' });
-    return;
-  }
-
-  if (link.status !== 'approved') {
-    res.status(403).json({ error: 'Member is not approved.' });
-    return;
-  }
-
-  if (link.usedAt) {
-    res.status(403).json({ error: 'Access link has already been used.' });
-    return;
-  }
-
-  if (new Date(link.expiresAt).getTime() < Date.now()) {
-    res.status(403).json({ error: 'Access link has expired.' });
-    return;
-  }
-
-  db.prepare(`UPDATE community_access_links SET used_at = CURRENT_TIMESTAMP WHERE id = ?`).run(link.id);
-
-  const memberToken = issueMemberToken({
-    userId: link.userId,
-    role: 'member',
-    fullName: link.fullName,
-    email: link.email,
-  });
-
-  res.cookie('church_member_session', memberToken, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
-    maxAge: 14 * 24 * 60 * 60 * 1000,
-  });
-
-  res.json({ message: 'Community access granted.' });
+app.post('/api/community/auth/link', (_req: Request<unknown, unknown, { token?: string }>, res: Response) => {
+  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
 });
 
-app.get('/api/community/session', requireMember, (_req: Request, res: Response) => {
-  res.json({ authenticated: true, member: res.locals.member });
+app.get('/api/community/session', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
 });
 
 app.post('/api/community/logout', (_req: Request, res: Response) => {
-  res.clearCookie('church_member_session');
-  res.json({ message: 'Logged out from community portal.' });
+  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
 });
 
-app.get('/api/community/resources', requireMember, (_req: Request, res: Response) => {
-  const resources = db
-    .prepare(
-      `SELECT id, title, type, url, description, created_at as createdAt
-       FROM community_resources
-       ORDER BY created_at DESC`
-    )
-    .all();
-  res.json(resources);
+app.get('/api/community/resources', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
 });
 
 app.get('/api/admin/events', requireAdmin, (_req: Request, res: Response) => {
@@ -1366,151 +1489,20 @@ app.delete('/api/admin/registrations/:id', requireAdmin, (req: Request<{ id: str
 });
 
 // Member Authentication Routes
-app.post('/api/members/register', (req: Request<unknown, unknown, { fullName?: string; email?: string; phone?: string; city?: string; password?: string }>, res: Response) => {
-  const fullName = req.body.fullName?.trim();
-  const email = req.body.email?.trim().toLowerCase();
-  const phone = req.body.phone?.trim() || '';
-  const city = req.body.city?.trim() || '';
-  const password = req.body.password?.trim();
-
-  if (!fullName || !email || !password || password.length < 8) {
-    res.status(400).json({ error: 'Full name, email, and password (min 8 characters) are required.' });
-    return;
-  }
-
-  const existing = db.prepare('SELECT id FROM users WHERE email = ? AND role = ?').get(email, 'member') as { id: number } | undefined;
-  if (existing) {
-    res.status(409).json({ error: 'This email is already registered.' });
-    return;
-  }
-
-  const passwordHash = bcrypt.hashSync(password, 10);
-
-  try {
-    db.prepare(
-      `INSERT INTO users (full_name, email, phone, city, password_hash, role, status)
-       VALUES (?, ?, ?, ?, ?, 'member', 'pending')`
-    ).run(fullName, email, phone, city, passwordHash);
-
-    writeActivityLog({
-      eventType: 'member_register_success',
-      method: 'POST',
-      path: '/api/members/register',
-      statusCode: 201,
-      actorRole: 'guest',
-      actorName: email,
-      ipAddress: getClientIp(req) || '',
-      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-      details: `fullName=${fullName}; status=pending`,
-    });
-
-    res.status(201).json({ message: 'Account created successfully! Please wait for admin approval before you can login.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Registration failed. Please try again.' });
-  }
+app.post('/api/members/register', (_req: Request<unknown, unknown, { fullName?: string; email?: string; phone?: string; city?: string; password?: string }>, res: Response) => {
+  res.status(403).json({ error: 'Member registration is disabled. Contact the administrator.' });
 });
 
-app.post('/api/members/login', (req: Request<unknown, unknown, { email?: string; password?: string }>, res: Response) => {
-  const email = req.body.email?.trim().toLowerCase();
-  const password = req.body.password?.trim();
-
-  if (!email || !password) {
-    res.status(400).json({ error: 'Email and password are required.' });
-    return;
-  }
-
-  const member = db
-    .prepare(
-      `SELECT id, full_name as fullName, email, password_hash as passwordHash, role, status
-       FROM users
-       WHERE email = ? AND role = 'member'
-       LIMIT 1`
-    )
-    .get(email) as { id: number; fullName: string; email: string; passwordHash: string; role: string; status: string } | undefined;
-
-  if (!member || !bcrypt.compareSync(password, member.passwordHash)) {
-    writeActivityLog({
-      eventType: 'member_login_failed',
-      method: 'POST',
-      path: '/api/members/login',
-      statusCode: 401,
-      actorRole: 'guest',
-      actorName: email || 'unknown',
-      ipAddress: getClientIp(req) || '',
-      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-    });
-    res.status(401).json({ error: 'Invalid email or password.' });
-    return;
-  }
-
-  if (member.status === 'pending') {
-    writeActivityLog({
-      eventType: 'member_login_blocked_pending',
-      method: 'POST',
-      path: '/api/members/login',
-      statusCode: 403,
-      actorRole: 'member',
-      actorId: member.id,
-      actorName: member.email,
-      ipAddress: getClientIp(req) || '',
-      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-    });
-    res.status(403).json({ error: 'Your account is awaiting admin approval. Please check back soon.' });
-    return;
-  }
-
-  if (member.status === 'rejected') {
-    writeActivityLog({
-      eventType: 'member_login_blocked_rejected',
-      method: 'POST',
-      path: '/api/members/login',
-      statusCode: 403,
-      actorRole: 'member',
-      actorId: member.id,
-      actorName: member.email,
-      ipAddress: getClientIp(req) || '',
-      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-    });
-    res.status(403).json({ error: 'Your account has been rejected. Please contact the church.' });
-    return;
-  }
-
-  const token = issueMemberToken({
-    userId: member.id,
-    role: 'member',
-    fullName: member.fullName,
-    email: member.email,
-  });
-
-  res.cookie('church_member_session', token, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
-    maxAge: 14 * 24 * 60 * 60 * 1000,
-  });
-
-  writeActivityLog({
-    eventType: 'member_login_success',
-    method: 'POST',
-    path: '/api/members/login',
-    statusCode: 200,
-    actorRole: 'member',
-    actorId: member.id,
-    actorName: member.email,
-    ipAddress: getClientIp(req) || '',
-    userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-  });
-
-  res.json({ message: 'Login successful.', fullName: member.fullName });
+app.post('/api/members/login', (_req: Request<unknown, unknown, { email?: string; password?: string }>, res: Response) => {
+  res.status(403).json({ error: 'Member login is disabled. Contact the administrator.' });
 });
 
 app.post('/api/members/logout', (_req: Request, res: Response) => {
-  res.clearCookie('church_member_session');
-  res.json({ message: 'Logged out.' });
+  res.status(403).json({ error: 'Member login is disabled. Contact the administrator.' });
 });
 
-app.get('/api/members/session', requireMember, (_req: Request, res: Response) => {
-  res.json({ authenticated: true, member: res.locals.member });
+app.get('/api/members/session', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'Member login is disabled. Contact the administrator.' });
 });
 
 app.get('/api/members/status/:email', (req: Request<{ email: string }>, res: Response) => {

@@ -8,11 +8,8 @@ const prayerList = document.querySelector('#prayer-list');
 const prayerEmpty = document.querySelector('#prayer-empty');
 const eventList = document.querySelector('#event-list');
 const eventEmpty = document.querySelector('#event-empty');
-const communityForm = document.querySelector('#community-form');
-const communityFeedback = document.querySelector('#community-feedback');
-const statTotalMembers = document.querySelector('#stat-total-members');
-const statApprovedMembers = document.querySelector('#stat-approved-members');
-const statPendingMembers = document.querySelector('#stat-pending-members');
+const galleryList = document.querySelector('#gallery-list');
+const galleryEmpty = document.querySelector('#gallery-empty');
 const languageSelect = document.querySelector('#language-select');
 let currentLanguage = 'en';
 
@@ -42,7 +39,7 @@ const translations = {
     navGallery: 'Gallery',
     navContact: 'Contact',
     navAdmin: 'Admin',
-    languageLabel: 'Language',
+    navBecomeMember: 'Do you want to be a member?',
     heroEyebrow: 'Budapest parish under the Germany and surrounding areas diocese',
     heroLead: 'A professional public-facing church website presenting the identity, worship life, community mission, and parish address of the Budapest Medhane Alem Church.',
     heroAddressBtn: 'View Official Address',
@@ -102,6 +99,7 @@ const translations = {
     communitySubmit: 'Register for approval',
     galleryTag: 'Church image gallery',
     galleryTitle: 'A visual presentation of faith, dignity, and parish identity',
+    galleryEmpty: 'No gallery media uploaded yet.',
     galleryImg1Alt: 'Portrait image used in the church website design',
     galleryImg1Caption: 'Sacred visual identity for the Budapest Medhane Alem Church',
     galleryImg2Alt: 'Secondary church-related image used in the website',
@@ -116,6 +114,8 @@ const translations = {
     contactDioceseValue: 'Germany and Surrounding Areas Diocese',
     contactPublicUseLabel: 'Public use',
     contactPublicUseValue: 'Church information, identity, and verification',
+    contactEmailLabel: 'Email contact',
+    contactEmailBtn: 'Send Email',
     contactTag: 'Contact and location',
     mapsBtn: 'Open in Maps',
     backTopBtn: 'Back to Top',
@@ -139,6 +139,7 @@ const translations = {
     shareFacebook: 'Facebook',
     shareTelegram: 'Telegram',
     shareWhatsApp: 'WhatsApp',
+    shareEmail: 'Email',
     registrationSubmitting: 'Submitting registration...',
     registrationSuccess: 'Registration received and awaiting admin approval.',
     registrationFailed: 'Registration failed.',
@@ -171,7 +172,7 @@ const translations = {
     navGallery: 'Galéria',
     navContact: 'Kapcsolat',
     navAdmin: 'Admin',
-    languageLabel: 'Nyelv',
+    navBecomeMember: 'Szeretne tag lenni?',
     heroEyebrow: 'Budapesti egyházközség a németországi és környező területek egyházmegyéje alatt',
     heroLead: 'Professzionális egyházi weboldal, amely bemutatja az egyház hivatalos azonosítását, istentiszteleti életét, közösségi küldetését és budapesti címét.',
     heroAddressBtn: 'Hivatalos cím megtekintése',
@@ -231,6 +232,7 @@ const translations = {
     communitySubmit: 'Regisztráció jóváhagyásra',
     galleryTag: 'Egyházi képgaléria',
     galleryTitle: 'A hit, méltóság és plébániai identitás vizuális bemutatása',
+    galleryEmpty: 'Még nincs feltöltött galéria tartalom.',
     galleryImg1Alt: 'Portré kép a templomi webdesignhoz',
     galleryImg1Caption: 'A Budapesti Medhane Alem Egyház szakrális vizuális identitása',
     galleryImg2Alt: 'Másodlagos templomi kép a weboldalhoz',
@@ -245,6 +247,8 @@ const translations = {
     contactDioceseValue: 'Németországi és Környező Területek Egyházmegyéje',
     contactPublicUseLabel: 'Nyilvános használat',
     contactPublicUseValue: 'Egyházi információ, identitás és ellenőrzés',
+    contactEmailLabel: 'Email kapcsolat',
+    contactEmailBtn: 'Email küldése',
     contactTag: 'Kapcsolat és helyszín',
     mapsBtn: 'Megnyitás térképen',
     backTopBtn: 'Vissza az elejére',
@@ -268,6 +272,7 @@ const translations = {
     shareFacebook: 'Facebook',
     shareTelegram: 'Telegram',
     shareWhatsApp: 'WhatsApp',
+    shareEmail: 'Email',
     registrationSubmitting: 'Regisztráció küldése...',
     registrationSuccess: 'A regisztráció megérkezett és admin jóváhagyásra vár.',
     registrationFailed: 'A regisztráció sikertelen.',
@@ -300,7 +305,7 @@ const translations = {
     navGallery: 'ፎቶ ማዕከል',
     navContact: 'አድራሻ',
     navAdmin: 'አድሚን',
-    languageLabel: 'ቋንቋ',
+    navBecomeMember: 'አባል መሆን ይፈልጋሉ?',
     heroEyebrow: 'በጀርመንና አካባቢው ሀገረ ስብከት ስር ያለ የቡዳፔስት ደብር',
     heroLead: 'ይህ ድረ-ገጽ የቤተክርስቲያኑን ይፋዊ መለያ፣ የአምልኮ ህይወት፣ የማህበረሰብ ተልዕኮ እና አድራሻ በባለሙያ መልኩ ያቀርባል።',
     heroAddressBtn: 'ይፋዊ አድራሻ ይመልከቱ',
@@ -360,6 +365,7 @@ const translations = {
     communitySubmit: 'ለማጽደቅ ይመዝገቡ',
     galleryTag: 'የቤተክርስቲያን ፎቶ ማዕከል',
     galleryTitle: 'የእምነት፣ ክብር እና የሰበካ ማንነት ምስላዊ ትርዒት',
+    galleryEmpty: 'እስካሁን የተጫነ የጋለሪ ይዘት የለም።',
     galleryImg1Alt: 'በቤተክርስቲያን ድር-ገጽ ንድፍ ውስጥ ጥቅም ላይ የዋለ የምስል ፎቶ',
     galleryImg1Caption: 'ለቡዳፔስት መድኃኔ ዓለም ቤተክርስቲያን ቅዱስ የምስል ማንነት',
     galleryImg2Alt: 'ለድር-ገጹ ጥቅም ላይ የዋለ ሁለተኛ የቤተክርስቲያን ምስል',
@@ -374,6 +380,8 @@ const translations = {
     contactDioceseValue: 'የጀርመንና አካባቢው ሀገረ ስብከት',
     contactPublicUseLabel: 'ለሕዝብ አገልግሎት',
     contactPublicUseValue: 'የቤተ ክርስቲያን መረጃ፣ ማንነት እና ማረጋገጫ',
+    contactEmailLabel: 'የኢሜይል አድራሻ',
+    contactEmailBtn: 'ኢሜይል ላክ',
     contactTag: 'አድራሻ እና መገኛ',
     mapsBtn: 'በካርታ ይክፈቱ',
     backTopBtn: 'ወደ ላይ ተመለስ',
@@ -397,6 +405,7 @@ const translations = {
     shareFacebook: 'ፌስቡክ',
     shareTelegram: 'ቴሌግራም',
     shareWhatsApp: 'ዋትስአፕ',
+    shareEmail: 'ኢሜይል',
     registrationSubmitting: 'ምዝገባ በመላክ ላይ...',
     registrationSuccess: 'ምዝገባው ተቀባይነት አግኝቶ የአድሚን ማጽደቅ ይጠብቃል።',
     registrationFailed: 'ምዝገባ አልተሳካም።',
@@ -578,6 +587,9 @@ function renderPrayerCard(prayer) {
   };
   const shareText = encodeURIComponent(`${localizedPrayer.title} - ${localizedPrayer.scheduledFor}\n\n${localizedPrayer.content}`);
   const shareUrl = encodeURIComponent(window.location.origin + window.location.pathname + '#prayers');
+  const emailSubject = encodeURIComponent(`${localizedPrayer.title} - Budapest Medhane Alem Church`);
+  const emailBody = encodeURIComponent(`${localizedPrayer.title} - ${localizedPrayer.scheduledFor}\n\n${localizedPrayer.content}\n\n${window.location.origin + window.location.pathname + '#prayers'}`);
+  const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=budapesteotc@gmail.com&su=${emailSubject}&body=${emailBody}`;
 
   return `
     <article class="prayer-card reveal is-visible">
@@ -592,6 +604,7 @@ function renderPrayerCard(prayer) {
         <a class="share-link" href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noreferrer">${escapeHtml(t('shareFacebook'))}</a>
         <a class="share-link" href="https://t.me/share/url?url=${shareUrl}&text=${shareText}" target="_blank" rel="noreferrer">${escapeHtml(t('shareTelegram'))}</a>
         <a class="share-link" href="https://wa.me/?text=${shareText}%20${shareUrl}" target="_blank" rel="noreferrer">${escapeHtml(t('shareWhatsApp'))}</a>
+        <a class="share-link" href="${gmailComposeUrl}" target="_blank" rel="noreferrer">${escapeHtml(t('shareEmail'))}</a>
         <a class="share-link" href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" rel="noreferrer">X</a>
       </div>
     </article>
@@ -616,6 +629,46 @@ function renderEventCard(eventItem) {
   `;
 }
 
+function renderGalleryCard(item) {
+  if (item.mediaType === 'video') {
+    return `
+      <figure class="gallery-card reveal is-visible">
+        <video controls preload="metadata" style="width: 100%; border-radius: 0.9rem; background: #000;">
+          <source src="${escapeHtml(item.mediaUrl)}">
+        </video>
+        <figcaption>${escapeHtml(item.title || item.caption || 'Video')}</figcaption>
+      </figure>
+    `;
+  }
+
+  return `
+    <figure class="gallery-card reveal is-visible">
+      <img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.title || item.caption || 'Gallery image')}">
+      <figcaption>${escapeHtml(item.title || item.caption || '')}</figcaption>
+    </figure>
+  `;
+}
+
+async function loadGallery() {
+  if (!galleryList || !galleryEmpty) {
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/public/gallery');
+    if (!response.ok) {
+      throw new Error(t('galleryEmpty'));
+    }
+
+    const media = await response.json();
+    galleryList.innerHTML = media.map(renderGalleryCard).join('');
+    galleryEmpty.hidden = media.length > 0;
+  } catch {
+    galleryEmpty.hidden = false;
+    galleryEmpty.textContent = t('galleryEmpty');
+  }
+}
+
 async function loadPrayers() {
   if (!prayerList || !prayerEmpty) {
     return;
@@ -632,18 +685,6 @@ async function loadPrayers() {
 
     prayerList.innerHTML = prayers.map(renderPrayerCard).join('');
     prayerEmpty.hidden = prayers.length > 0;
-
-    if (statTotalMembers) {
-      statTotalMembers.textContent = String(data.stats?.totalMembers ?? 0);
-    }
-
-    if (statApprovedMembers) {
-      statApprovedMembers.textContent = String(data.stats?.approvedMembers ?? 0);
-    }
-
-    if (statPendingMembers) {
-      statPendingMembers.textContent = String(data.stats?.pendingMembers ?? 0);
-    }
 
     prayerList.querySelectorAll('[data-share-native]').forEach((button) => {
       button.addEventListener('click', async () => {
@@ -699,37 +740,6 @@ async function trackVisit() {
   }
 }
 
-if (communityForm && communityFeedback) {
-  communityForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const data = new FormData(communityForm);
-    const payload = Object.fromEntries(data.entries());
-
-    communityFeedback.textContent = t('registrationSubmitting');
-
-    try {
-      const response = await fetch('/api/public/registrations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Registration failed.');
-      }
-
-      communityFeedback.textContent = t('registrationSuccess');
-      communityForm.reset();
-      loadPrayers();
-    } catch (error) {
-      communityFeedback.textContent = error instanceof Error ? error.message : t('registrationFailed');
-    }
-  });
-}
-
 if (languageSelect) {
   const storedLanguage = localStorage.getItem('site-language');
   if (storedLanguage && translations[storedLanguage]) {
@@ -742,6 +752,7 @@ if (languageSelect) {
     applyTranslations();
     loadPrayers();
     loadEvents();
+    loadGallery();
   });
 }
 
@@ -750,3 +761,4 @@ applyTranslations();
 trackVisit();
 loadPrayers();
 loadEvents();
+loadGallery();

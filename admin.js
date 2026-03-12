@@ -1,3 +1,461 @@
+// ── i18n ─────────────────────────────────────────────────────────────────────
+const adminTranslations = {
+  en: {
+    languageLabel: 'Language',
+    adminTopbar: 'Protected administrator workspace',
+    adminReturnToSite: 'Return to public website',
+    adminLoginTag: 'Administrator login',
+    adminLoginTitle: 'Manage prayers, registrations, and visitors',
+    adminLoginDesc: 'Only the administrator should know the login credentials for this dashboard.',
+    adminUsernameLabel: 'Username',
+    adminUsernamePlaceholder: 'Admin username',
+    adminPasswordLabel: 'Password',
+    adminPasswordPlaceholder: 'Admin password',
+    adminSignIn: 'Sign in',
+    adminDashboardTag: 'Dashboard',
+    adminDashboardTitle: 'Budapest Medhane Alem Church Admin',
+    adminLogout: 'Logout',
+    adminSignedInAs: 'Signed in as',
+    adminSessionExpired: 'Session expired. Please sign in again.',
+    adminSigningIn: 'Signing in...',
+    adminLoginFailed: 'Login failed.',
+    // Stats
+    adminStatPrayers: 'Prayers',
+    adminStatDeletedPrayers: 'Deleted Prayers',
+    adminStatEvents: 'Events',
+    adminStatMembers: 'Members',
+    adminStatPending: 'Pending',
+    adminStatApproved: 'Approved',
+    adminStatVisits: 'Visits',
+    adminStatResources: 'Resources',
+    adminStatActiveLinks: 'Active Links',
+    // Prayer management
+    adminPrayerTag: 'Prayer management',
+    adminPrayerTitle: 'Add, edit, or delete prayers',
+    adminPrayerTitleLabel: 'Prayer title',
+    adminPrayerTitlePlaceholder: 'Prayer title',
+    adminPrayerCategoryLabel: 'Category',
+    adminPrayerCategoryPlaceholder: 'Weekly Prayer, Feast Day, Community',
+    adminPrayerScheduledLabel: 'Scheduled time',
+    adminPrayerScheduledPlaceholder: 'Every Sunday, 6:00 - 10:30',
+    adminPrayerDescLabel: 'Description',
+    adminPrayerDescPlaceholder: 'Prayer details',
+    adminPrayerSave: 'Save prayer',
+    adminPrayerReset: 'Reset',
+    adminPrayerTrashTag: 'Prayer trash',
+    adminPrayerTrashTitle: 'Restore mistakenly deleted prayers',
+    adminPrayerEdit: 'Edit',
+    adminPrayerDelete: 'Delete',
+    adminPrayerRestore: 'Restore',
+    adminPrayerSaving: 'Saving prayer...',
+    adminPrayerSaved: 'Prayer saved.',
+    adminPrayerSaveFailed: 'Prayer save failed.',
+    adminPrayerDeleteConfirm: 'Delete this prayer?',
+    adminPrayerDeleteFailed: 'Delete failed.',
+    adminPrayerRestored: 'Prayer restored.',
+    adminPrayerRestoreFailed: 'Restore failed.',
+    adminPrayerEmpty: 'No prayers are available.',
+    adminPrayerTrashEmpty: 'Trash is empty.',
+    adminPrayerEditing: 'Editing',
+    // Event management
+    adminEventTag: 'Event management',
+    adminEventTitle: 'Create church events with time, date, files, and details',
+    adminEventNewButton: 'Add new event',
+    adminEventTitleLabel: 'Event title',
+    adminEventTitlePlaceholder: 'Church event title',
+    adminEventCategoryLabel: 'Category',
+    adminEventCategoryPlaceholder: 'Liturgy, Conference, Youth, Memorial',
+    adminEventDateLabel: 'Date',
+    adminEventStartTimeLabel: 'Start time',
+    adminEventEndTimeLabel: 'End time',
+    adminEventLocationLabel: 'Location',
+    adminEventLocationPlaceholder: 'Budapest Medhane Alem Church or other venue',
+    adminEventExternalLinkLabel: 'External link',
+    adminEventExternalLinkPlaceholder: 'https://event page or livestream link',
+    adminEventDocumentLabel: 'Upload document',
+    adminEventPublishCheckbox: 'Post this event to users',
+    adminEventDetailsLabel: 'Details',
+    adminEventDetailsPlaceholder: 'Event details, schedule, and instructions',
+    adminEventSave: 'Save event',
+    adminEventReset: 'Reset',
+    adminEventEdit: 'Edit',
+    adminEventHide: 'Hide from users',
+    adminEventPost: 'Post to users',
+    adminEventDelete: 'Delete',
+    adminEventSaving: 'Saving event...',
+    adminEventSaved: 'Event saved.',
+    adminEventSaveFailed: 'Event save failed.',
+    adminEventDeleteConfirm: 'Delete this event?',
+    adminEventDeleteFailed: 'Delete failed.',
+    adminEventPublishFailed: 'Publish update failed.',
+    adminEventNoLocation: 'No location provided',
+    adminEventEmpty: 'No events published yet.',
+    adminEventCreatingNew: 'Creating a new event.',
+    adminEventDocumentOptional: 'Optional: upload a document or add an external link.',
+    adminEventDocumentRemove: 'Remove document',
+    adminEventDocumentRemoved: 'Document will be removed when you save the event.',
+    adminEventNoDocument: 'No document uploaded for this event.',
+    adminEventDocumentOpen: 'Open document',
+    adminEventPublished: 'Published',
+    adminEventDraft: 'Draft',
+    adminEventEditing: 'Editing',
+    // Registrations
+    adminRegTag: 'Community approvals',
+    adminRegTitle: 'Review and accept registrations',
+    adminRegDesc: 'New registrations require your approval before members can access the portal.',
+    adminRegApprove: 'Approve',
+    adminRegReject: 'Reject',
+    adminRegUndo: 'Undo',
+    adminRegDelete: 'Delete',
+    adminRegDeleteConfirm: 'Delete this registration?',
+    adminRegDeleteFailed: 'Delete failed.',
+    adminRegStatusFailed: 'Status update failed.',
+    adminRegEmpty: 'No registrations yet.',
+    adminRegNoPhone: 'No phone provided',
+    adminRegNoCity: 'No city provided',
+    adminRegNoMessage: 'No message provided',
+    // Member links
+    adminMemberLinksTag: 'Community access links',
+    adminMemberLinksTitle: 'Generate member-only share links',
+    adminMemberSelect: 'Approved member',
+    adminMemberExpiry: 'Expiry (days)',
+    adminMemberGenerateLink: 'Generate link',
+    adminMemberGenerating: 'Generating access link...',
+    adminMemberGenFailed: 'Failed to generate link.',
+    adminMemberLinkCreated: 'Link created for',
+    adminMemberLinksEmpty: 'No community links yet.',
+    adminMemberCopyLink: 'Copy link',
+    adminMemberCopied: 'Copied',
+    adminMemberCopyFailed: 'Copy failed',
+    adminMemberOpen: 'Open',
+    adminMemberExpires: 'Expires:',
+    adminStatusActive: 'Active',
+    adminStatusUsed: 'Used',
+    adminStatusExpired: 'Expired',
+    adminNoApprovedMembers: 'No approved members available',
+    // Resources
+    adminResourceTag: 'Community resources',
+    adminResourceTitle: 'Add prayer documents or post videos',
+    adminResourceTitleLabel: 'Resource title',
+    adminResourceTitlePlaceholder: 'Prayer PDF or teaching video title',
+    adminResourceTypeLabel: 'Type',
+    adminResourceTypeDocument: 'Document',
+    adminResourceTypeVideo: 'Video',
+    adminResourceUrlLabel: 'URL',
+    adminResourceDescLabel: 'Description',
+    adminResourceDescPlaceholder: 'Optional description',
+    adminResourcePublish: 'Publish resource',
+    adminResourcePublishing: 'Publishing resource...',
+    adminResourcePublished: 'Resource published.',
+    adminResourcePublishFailed: 'Resource publish failed.',
+    adminResourceDelete: 'Delete',
+    adminResourceDeleteConfirm: 'Delete this resource?',
+    adminResourceDeleteFailed: 'Delete failed.',
+    adminResourceEmpty: 'No resources published yet.',
+    // Gallery
+    adminGalleryTag: 'Gallery management',
+    adminGalleryTitle: 'Upload photos and videos for the home gallery',
+    adminGalleryMediaLabel: 'Media file',
+    adminGalleryItemTitleLabel: 'Title',
+    adminGalleryCaptionLabel: 'Caption',
+    adminGalleryUpload: 'Upload to gallery',
+    adminGalleryUploading: 'Uploading media...',
+    adminGalleryUploaded: 'Media uploaded to gallery.',
+    adminGalleryUploadFailed: 'Gallery upload failed.',
+    adminGalleryDelete: 'Delete',
+    adminGalleryDeleteConfirm: 'Delete this gallery item?',
+    adminGalleryDeleteFailed: 'Delete failed.',
+    adminGalleryEmpty: 'No gallery media uploaded yet.',
+    // Visitor log
+    adminVisitorTag: 'Visitor log',
+    adminVisitorTitle: 'Recent website entries',
+    adminVisitorTime: 'Time',
+    adminVisitorPage: 'Page',
+    adminVisitorReferrer: 'Referrer',
+    adminVisitorIP: 'IP',
+    adminVisitorUA: 'User agent',
+    adminVisitorEmpty: 'No visit records yet.',
+    // System log
+    adminLogTag: 'All logs',
+    adminLogTitle: 'Unified system activity log',
+    adminLogTime: 'Time',
+    adminLogSource: 'Source',
+    adminLogEvent: 'Event',
+    adminLogActor: 'Actor',
+    adminLogMethod: 'Method',
+    adminLogPath: 'Path',
+    adminLogStatus: 'Status',
+    adminLogDetails: 'Details',
+    adminLogEmpty: 'No system log records yet.',
+    // Homepage editor
+    adminHomeEditorTag: 'Homepage content editor',
+    adminHomeEditorTitle: 'Edit any text on the home page',
+    adminHomeEditorDesc: 'Load the current home page sources, edit text, then save. Changes apply immediately.',
+    adminHomeEditorLoad: 'Load latest',
+    adminHomeEditorAdvanced: 'Advanced source editor',
+    adminHomeEditorIndexLabel: 'Home HTML source (index.html)',
+    adminHomeEditorScriptLabel: 'Home script source (script.js)',
+    adminHomeEditorSave: 'Save homepage text',
+    adminHomeReplaceFindLabel: 'Text currently shown on the website',
+    adminHomeReplaceWithLabel: 'New text',
+    adminHomeReplaceSave: 'Replace text and save',
+    adminHomeReplaceNotFound: 'That text was not found in the saved homepage content.',
+    adminHomeReplaceSaved: 'Homepage text replaced and saved.',
+    adminHomeEditorLoading: 'Loading homepage sources...',
+    adminHomeEditorLoaded: 'Homepage sources loaded.',
+    adminHomeEditorSaving: 'Saving homepage text...',
+    adminHomeEditorSaved: 'Homepage text saved.',
+    adminHomeEditorFailed: 'Failed to update homepage text.',
+    // Deleted prayer
+    adminPrayerDeletedTag: 'Deleted',
+  },
+  hu: {
+    languageLabel: 'Nyelv',
+    adminTopbar: 'Védett rendszergazdai munkaterület',
+    adminReturnToSite: 'Vissza a nyilvános weboldalra',
+    adminLoginTag: 'Rendszergazdai bejelentkezés',
+    adminLoginTitle: 'Imák, regisztrációk és látogatók kezelése',
+    adminLoginDesc: 'Csak a rendszergazda ismerheti az irányítópult bejelentkezési adatait.',
+    adminUsernameLabel: 'Felhasználónév',
+    adminUsernamePlaceholder: 'Admin felhasználónév',
+    adminPasswordLabel: 'Jelszó',
+    adminPasswordPlaceholder: 'Admin jelszó',
+    adminSignIn: 'Bejelentkezés',
+    adminDashboardTag: 'Irányítópult',
+    adminDashboardTitle: 'Budapest Medhane Alem Egyház Admin',
+    adminLogout: 'Kijelentkezés',
+    adminSignedInAs: 'Bejelentkezve mint',
+    adminSessionExpired: 'A munkamenet lejárt. Kérjük, jelentkezzen be újra.',
+    adminSigningIn: 'Bejelentkezés...',
+    adminLoginFailed: 'Bejelentkezés sikertelen.',
+    // Stats
+    adminStatPrayers: 'Imák',
+    adminStatDeletedPrayers: 'Törölt imák',
+    adminStatEvents: 'Események',
+    adminStatMembers: 'Tagok',
+    adminStatPending: 'Függőben',
+    adminStatApproved: 'Jóváhagyva',
+    adminStatVisits: 'Látogatások',
+    adminStatResources: 'Erőforrások',
+    adminStatActiveLinks: 'Aktív hivatkozások',
+    // Prayer management
+    adminPrayerTag: 'Imák kezelése',
+    adminPrayerTitle: 'Imák hozzáadása, szerkesztése vagy törlése',
+    adminPrayerTitleLabel: 'Ima neve',
+    adminPrayerTitlePlaceholder: 'Ima neve',
+    adminPrayerCategoryLabel: 'Kategória',
+    adminPrayerCategoryPlaceholder: 'Heti ima, Ünnepi ima, Közösségi',
+    adminPrayerScheduledLabel: 'Ütemezett időpont',
+    adminPrayerScheduledPlaceholder: 'Minden vasárnap, 6:00 - 10:30',
+    adminPrayerDescLabel: 'Leírás',
+    adminPrayerDescPlaceholder: 'Az ima részletei',
+    adminPrayerSave: 'Ima mentése',
+    adminPrayerReset: 'Visszaállítás',
+    adminPrayerTrashTag: 'Törölt imák',
+    adminPrayerTrashTitle: 'Tévedésből törölt imák visszaállítása',
+    adminPrayerEdit: 'Szerkesztés',
+    adminPrayerDelete: 'Törlés',
+    adminPrayerRestore: 'Visszaállítás',
+    adminPrayerSaving: 'Ima mentése...',
+    adminPrayerSaved: 'Ima mentve.',
+    adminPrayerSaveFailed: 'Az ima mentése sikertelen.',
+    adminPrayerDeleteConfirm: 'Törli ezt az imát?',
+    adminPrayerDeleteFailed: 'Törlés sikertelen.',
+    adminPrayerRestored: 'Ima visszaállítva.',
+    adminPrayerRestoreFailed: 'Visszaállítás sikertelen.',
+    adminPrayerEmpty: 'Nincsenek elérhető imák.',
+    adminPrayerTrashEmpty: 'A kuka üres.',
+    adminPrayerEditing: 'Szerkesztés',
+    // Event management
+    adminEventTag: 'Események kezelése',
+    adminEventTitle: 'Egyházi események létrehozása időponttal, dátummal, fájlokkal és részletekkel',
+    adminEventNewButton: 'Új esemény hozzáadása',
+    adminEventTitleLabel: 'Esemény neve',
+    adminEventTitlePlaceholder: 'Egyházi esemény neve',
+    adminEventCategoryLabel: 'Kategória',
+    adminEventCategoryPlaceholder: 'Liturgia, Konferencia, Ifjúság, Megemlékezés',
+    adminEventDateLabel: 'Dátum',
+    adminEventStartTimeLabel: 'Kezdési idő',
+    adminEventEndTimeLabel: 'Befejezési idő',
+    adminEventLocationLabel: 'Helyszín',
+    adminEventLocationPlaceholder: 'Budapest Medhane Alem Egyház vagy más helyszín',
+    adminEventExternalLinkLabel: 'Külső hivatkozás',
+    adminEventExternalLinkPlaceholder: 'https://esemény oldala vagy élő közvetítés',
+    adminEventDocumentLabel: 'Dokumentum feltöltése',
+    adminEventPublishCheckbox: 'Esemény közzététele a felhasználóknak',
+    adminEventDetailsLabel: 'Részletek',
+    adminEventDetailsPlaceholder: 'Esemény részletei, program és utasítások',
+    adminEventSave: 'Esemény mentése',
+    adminEventReset: 'Visszaállítás',
+    adminEventEdit: 'Szerkesztés',
+    adminEventHide: 'Elrejtés a felhasználók elől',
+    adminEventPost: 'Közzététel a felhasználóknak',
+    adminEventDelete: 'Törlés',
+    adminEventSaving: 'Esemény mentése...',
+    adminEventSaved: 'Esemény mentve.',
+    adminEventSaveFailed: 'Az esemény mentése sikertelen.',
+    adminEventDeleteConfirm: 'Törli ezt az eseményt?',
+    adminEventDeleteFailed: 'Törlés sikertelen.',
+    adminEventPublishFailed: 'A közzététel frissítése sikertelen.',
+    adminEventNoLocation: 'Nincs megadott helyszín',
+    adminEventEmpty: 'Még nem tettek közzé eseményt.',
+    adminEventCreatingNew: 'Új esemény létrehozása.',
+    adminEventDocumentOptional: 'Opcionális: töltsön fel dokumentumot vagy adjon meg külső hivatkozást.',
+    adminEventDocumentRemove: 'Dokumentum eltávolítása',
+    adminEventDocumentRemoved: 'A dokumentum törlődik az esemény mentésekor.',
+    adminEventNoDocument: 'Ehhez az eseményhez nincs feltöltött dokumentum.',
+    adminEventDocumentOpen: 'Dokumentum megnyitása',
+    adminEventPublished: 'Közzétéve',
+    adminEventDraft: 'Piszkozat',
+    adminEventEditing: 'Szerkesztés',
+    // Registrations
+    adminRegTag: 'Közösségi jóváhagyások',
+    adminRegTitle: 'Regisztrációk áttekintése és elfogadása',
+    adminRegDesc: 'Az új regisztrációkat jóvá kell hagyni, mielőtt a tagok hozzáférhetnének a portálhoz.',
+    adminRegApprove: 'Jóváhagyás',
+    adminRegReject: 'Elutasítás',
+    adminRegUndo: 'Visszavonás',
+    adminRegDelete: 'Törlés',
+    adminRegDeleteConfirm: 'Törli ezt a regisztrációt?',
+    adminRegDeleteFailed: 'Törlés sikertelen.',
+    adminRegStatusFailed: 'Állapot frissítése sikertelen.',
+    adminRegEmpty: 'Még nincs regisztráció.',
+    adminRegNoPhone: 'Nincs megadott telefonszám',
+    adminRegNoCity: 'Nincs megadott város',
+    adminRegNoMessage: 'Nincs megadott üzenet',
+    // Member links
+    adminMemberLinksTag: 'Közösségi hozzáférési hivatkozások',
+    adminMemberLinksTitle: 'Csak tagoknak szóló megosztási hivatkozások létrehozása',
+    adminMemberSelect: 'Jóváhagyott tag',
+    adminMemberExpiry: 'Lejárat (napokban)',
+    adminMemberGenerateLink: 'Hivatkozás létrehozása',
+    adminMemberGenerating: 'Hozzáférési hivatkozás létrehozása...',
+    adminMemberGenFailed: 'A hivatkozás létrehozása sikertelen.',
+    adminMemberLinkCreated: 'Hivatkozás létrehozva ehhez',
+    adminMemberLinksEmpty: 'Még nincs közösségi hivatkozás.',
+    adminMemberCopyLink: 'Hivatkozás másolása',
+    adminMemberCopied: 'Másolva',
+    adminMemberCopyFailed: 'Másolás sikertelen',
+    adminMemberOpen: 'Megnyitás',
+    adminMemberExpires: 'Lejárat:',
+    adminStatusActive: 'Aktív',
+    adminStatusUsed: 'Felhasznált',
+    adminStatusExpired: 'Lejárt',
+    adminNoApprovedMembers: 'Nincs jóváhagyott tag',
+    // Resources
+    adminResourceTag: 'Közösségi erőforrások',
+    adminResourceTitle: 'Ima dokumentumok hozzáadása vagy videók közzététele',
+    adminResourceTitleLabel: 'Erőforrás neve',
+    adminResourceTitlePlaceholder: 'Ima PDF vagy tanítási videó neve',
+    adminResourceTypeLabel: 'Típus',
+    adminResourceTypeDocument: 'Dokumentum',
+    adminResourceTypeVideo: 'Videó',
+    adminResourceUrlLabel: 'URL',
+    adminResourceDescLabel: 'Leírás',
+    adminResourceDescPlaceholder: 'Opcionális leírás',
+    adminResourcePublish: 'Erőforrás közzététele',
+    adminResourcePublishing: 'Erőforrás közzététele...',
+    adminResourcePublished: 'Erőforrás közzétéve.',
+    adminResourcePublishFailed: 'Az erőforrás közzététele sikertelen.',
+    adminResourceDelete: 'Törlés',
+    adminResourceDeleteConfirm: 'Törli ezt az erőforrást?',
+    adminResourceDeleteFailed: 'Törlés sikertelen.',
+    adminResourceEmpty: 'Még nem tettek közzé erőforrást.',
+    // Gallery
+    adminGalleryTag: 'Galéria kezelés',
+    adminGalleryTitle: 'Fotók és videók feltöltése a főoldali galériához',
+    adminGalleryMediaLabel: 'Médiafájl',
+    adminGalleryItemTitleLabel: 'Cím',
+    adminGalleryCaptionLabel: 'Felirat',
+    adminGalleryUpload: 'Feltöltés a galériába',
+    adminGalleryUploading: 'Média feltöltése...',
+    adminGalleryUploaded: 'Média feltöltve a galériába.',
+    adminGalleryUploadFailed: 'Galéria feltöltés sikertelen.',
+    adminGalleryDelete: 'Törlés',
+    adminGalleryDeleteConfirm: 'Törli ezt a galéria elemet?',
+    adminGalleryDeleteFailed: 'Törlés sikertelen.',
+    adminGalleryEmpty: 'Még nincs feltöltött galéria tartalom.',
+    // Visitor log
+    adminVisitorTag: 'Látogatói napló',
+    adminVisitorTitle: 'Legutóbbi weboldal látogatások',
+    adminVisitorTime: 'Idő',
+    adminVisitorPage: 'Oldal',
+    adminVisitorReferrer: 'Hivatkozó',
+    adminVisitorIP: 'IP-cím',
+    adminVisitorUA: 'Böngésző',
+    adminVisitorEmpty: 'Még nincs látogatási adat.',
+    // System log
+    adminLogTag: 'Összes napló',
+    adminLogTitle: 'Egységes rendszeraktivitás napló',
+    adminLogTime: 'Idő',
+    adminLogSource: 'Forrás',
+    adminLogEvent: 'Esemény',
+    adminLogActor: 'Szereplő',
+    adminLogMethod: 'Módszer',
+    adminLogPath: 'Útvonal',
+    adminLogStatus: 'Állapot',
+    adminLogDetails: 'Részletek',
+    adminLogEmpty: 'Még nincs rendszernapló bejegyzés.',
+    // Homepage editor
+    adminHomeEditorTag: 'Főoldal tartalomszerkesztő',
+    adminHomeEditorTitle: 'A főoldal bármely szövegének szerkesztése',
+    adminHomeEditorDesc: 'Töltse be az aktuális főoldal forrásait, szerkessze a szöveget, majd mentse. A módosítások azonnal életbe lépnek.',
+    adminHomeEditorLoad: 'Legfrissebb betöltése',
+    adminHomeEditorAdvanced: 'Haladó forrásszerkesztő',
+    adminHomeEditorIndexLabel: 'Főoldal HTML forrás (index.html)',
+    adminHomeEditorScriptLabel: 'Főoldal script forrás (script.js)',
+    adminHomeEditorSave: 'Főoldal szöveg mentése',
+    adminHomeReplaceFindLabel: 'A weboldalon jelenleg látható szöveg',
+    adminHomeReplaceWithLabel: 'Új szöveg',
+    adminHomeReplaceSave: 'Szöveg cseréje és mentése',
+    adminHomeReplaceNotFound: 'Ez a szöveg nem található a mentett főoldal tartalmában.',
+    adminHomeReplaceSaved: 'A főoldal szövege lecserélve és elmentve.',
+    adminHomeEditorLoading: 'Főoldal forrásainak betöltése...',
+    adminHomeEditorLoaded: 'Főoldal forrásai betöltve.',
+    adminHomeEditorSaving: 'Főoldal szöveg mentése...',
+    adminHomeEditorSaved: 'Főoldal szöveg mentve.',
+    adminHomeEditorFailed: 'A főoldal frissítése sikertelen.',
+    // Deleted prayer
+    adminPrayerDeletedTag: 'Törölve',
+  },
+};
+
+let adminCurrentLanguage = localStorage.getItem('site-language') || 'en';
+if (!adminTranslations[adminCurrentLanguage]) {
+  adminCurrentLanguage = 'en';
+}
+
+function t(key) {
+  return adminTranslations[adminCurrentLanguage]?.[key] || adminTranslations.en[key] || key;
+}
+
+function applyAdminTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach((node) => {
+    const key = node.getAttribute('data-i18n');
+    if (key) node.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
+    const key = node.getAttribute('data-i18n-placeholder');
+    if (key) node.setAttribute('placeholder', t(key));
+  });
+  document.documentElement.lang = adminCurrentLanguage;
+}
+
+const adminLanguageSelect = document.querySelector('#admin-language-select');
+if (adminLanguageSelect) {
+  adminLanguageSelect.value = adminCurrentLanguage;
+  adminLanguageSelect.addEventListener('change', () => {
+    adminCurrentLanguage = adminLanguageSelect.value;
+    localStorage.setItem('site-language', adminCurrentLanguage);
+    applyAdminTranslations();
+    // Re-render dynamic lists so they pick up new language
+    hydrateDashboard();
+  });
+}
+
+applyAdminTranslations();
+
+// ─────────────────────────────────────────────────────────────────────────────
 const authCard = document.querySelector('#admin-auth-card');
 const dashboard = document.querySelector('#admin-dashboard');
 const loginForm = document.querySelector('#admin-login-form');
@@ -25,7 +483,19 @@ const memberLinksList = document.querySelector('#member-links-list');
 const resourceForm = document.querySelector('#resource-form');
 const resourceFeedback = document.querySelector('#resource-feedback');
 const resourceList = document.querySelector('#resource-list');
+const galleryForm = document.querySelector('#gallery-form');
+const galleryFeedback = document.querySelector('#gallery-feedback');
+const galleryList = document.querySelector('#gallery-list');
 const prayerTrashList = document.querySelector('#prayer-trash-list');
+const homepageEditorForm = document.querySelector('#homepage-editor-form');
+const homepageEditorFeedback = document.querySelector('#homepage-editor-feedback');
+const homepageEditorLoadButton = document.querySelector('#homepage-editor-load');
+const homepageIndexSource = document.querySelector('#homepage-index-source');
+const homepageScriptSource = document.querySelector('#homepage-script-source');
+const homepageTextReplaceForm = document.querySelector('#homepage-text-replace-form');
+const homepageTextReplaceFeedback = document.querySelector('#homepage-text-replace-feedback');
+const homepageReplaceFind = document.querySelector('#homepage-replace-find');
+const homepageReplaceWith = document.querySelector('#homepage-replace-with');
 
 function escapeHtml(value) {
   return String(value)
@@ -34,6 +504,120 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeWhitespace(value) {
+  return String(value ?? '').replace(/\s+/g, ' ').trim();
+}
+
+function countBigrams(value) {
+  const normalized = normalizeWhitespace(value);
+  const bigrams = new Map();
+
+  if (normalized.length < 2) {
+    return bigrams;
+  }
+
+  for (let index = 0; index < normalized.length - 1; index += 1) {
+    const pair = normalized.slice(index, index + 2);
+    bigrams.set(pair, (bigrams.get(pair) || 0) + 1);
+  }
+
+  return bigrams;
+}
+
+function stringSimilarity(left, right) {
+  const leftMap = countBigrams(left);
+  const rightMap = countBigrams(right);
+
+  if (leftMap.size === 0 || rightMap.size === 0) {
+    return normalizeWhitespace(left) === normalizeWhitespace(right) ? 1 : 0;
+  }
+
+  let intersection = 0;
+  let leftSize = 0;
+  let rightSize = 0;
+
+  leftMap.forEach((count, pair) => {
+    leftSize += count;
+    intersection += Math.min(count, rightMap.get(pair) || 0);
+  });
+
+  rightMap.forEach((count) => {
+    rightSize += count;
+  });
+
+  return (2 * intersection) / (leftSize + rightSize);
+}
+
+function replaceTextInSource(source, findText, replaceText) {
+  const exactCount = source.includes(findText) ? source.split(findText).length - 1 : 0;
+  if (exactCount > 0) {
+    return {
+      updatedSource: source.split(findText).join(replaceText),
+      replacements: exactCount,
+    };
+  }
+
+  const trimmedFindText = findText.trim();
+  const trimmedExactCount = trimmedFindText && source.includes(trimmedFindText)
+    ? source.split(trimmedFindText).length - 1
+    : 0;
+  if (trimmedExactCount > 0) {
+    return {
+      updatedSource: source.split(trimmedFindText).join(replaceText),
+      replacements: trimmedExactCount,
+    };
+  }
+
+  const normalizedParts = trimmedFindText.split(/\s+/).filter(Boolean);
+  if (normalizedParts.length > 0) {
+    const flexibleRegex = new RegExp(normalizedParts.map(escapeRegExp).join('\\s+'), 'gu');
+    const regexMatches = source.match(flexibleRegex);
+    if (regexMatches && regexMatches.length > 0) {
+      return {
+        updatedSource: source.replace(flexibleRegex, replaceText),
+        replacements: regexMatches.length,
+      };
+    }
+  }
+
+  const normalizedFindText = normalizeWhitespace(findText);
+  let bestMatch = null;
+
+  for (const match of source.matchAll(/>([^<>]+)</gu)) {
+    const originalText = match[1];
+    const normalizedCandidate = normalizeWhitespace(originalText);
+
+    if (!normalizedCandidate) {
+      continue;
+    }
+
+    let score = stringSimilarity(normalizedCandidate, normalizedFindText);
+    if (normalizedCandidate.includes(normalizedFindText) || normalizedFindText.includes(normalizedCandidate)) {
+      score = Math.max(score, 0.92);
+    }
+
+    if (!bestMatch || score > bestMatch.score) {
+      bestMatch = { originalText, score };
+    }
+  }
+
+  if (bestMatch && bestMatch.score >= 0.72) {
+    return {
+      updatedSource: source.replace(bestMatch.originalText, replaceText),
+      replacements: 1,
+    };
+  }
+
+  return {
+    updatedSource: source,
+    replacements: 0,
+  };
 }
 
 async function api(url, options = {}) {
@@ -51,7 +635,7 @@ async function api(url, options = {}) {
 
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
-      forceRelogin(payload?.error || 'Session expired. Please sign in again.');
+      forceRelogin(payload?.error || null);
     }
     throw new Error(payload?.error || payload?.message || 'Request failed.');
   }
@@ -62,7 +646,7 @@ async function api(url, options = {}) {
 function setAuthenticated(session) {
   authCard.hidden = true;
   dashboard.hidden = false;
-  adminIdentity.textContent = `Signed in as ${session.admin.username}`;
+  adminIdentity.textContent = `${t('adminSignedInAs')} ${session.admin.username}`;
 }
 
 function setLoggedOut() {
@@ -70,7 +654,8 @@ function setLoggedOut() {
   authCard.hidden = false;
 }
 
-function forceRelogin(message = 'Session expired. Please sign in again.') {
+function forceRelogin(message = null) {
+  message = message ?? t('adminSessionExpired');
   setLoggedOut();
   if (loginFeedback) {
     loginFeedback.textContent = message;
@@ -99,7 +684,7 @@ function attachRemoveDocumentAction() {
 
   removeButton.addEventListener('click', () => {
     eventForm.elements.removeDocument.value = 'true';
-    eventDocumentStatus.textContent = 'Document will be removed when you save the event.';
+    eventDocumentStatus.textContent = t('adminEventDocumentRemoved');
   });
 }
 
@@ -118,8 +703,8 @@ function fillEventForm(eventItem) {
 
   if (eventDocumentStatus) {
     eventDocumentStatus.innerHTML = eventItem.documentUrl
-      ? `Current document: <a href="${escapeHtml(eventItem.documentUrl)}" target="_blank" rel="noreferrer">${escapeHtml(eventItem.documentName || 'Open document')}</a> <button class="button button--secondary admin-inline-button" id="remove-event-document" type="button">Remove document</button>`
-      : 'No document uploaded for this event.';
+      ? `${t('adminEventDocumentOpen')}: <a href="${escapeHtml(eventItem.documentUrl)}" target="_blank" rel="noreferrer">${escapeHtml(eventItem.documentName || t('adminEventDocumentOpen'))}</a> <button class="button button--secondary admin-inline-button" id="remove-event-document" type="button">${t('adminEventDocumentRemove')}</button>`
+      : t('adminEventNoDocument');
   }
 
   const documentInput = eventForm.querySelector('input[name="document"]');
@@ -137,7 +722,7 @@ function resetEventForm() {
   eventForm.elements.removeDocument.value = 'false';
   eventFeedback.textContent = '';
   if (eventDocumentStatus) {
-    eventDocumentStatus.textContent = 'Optional: upload a document or add an external link.';
+    eventDocumentStatus.textContent = t('adminEventDocumentOptional');
   }
 }
 
@@ -155,8 +740,8 @@ function renderPrayerActions(prayer) {
         data-category="${escapeHtml(prayer.category)}"
         data-scheduledfor="${escapeHtml(prayer.scheduledFor)}"
         data-content="${escapeHtml(prayer.content)}"
-      >Edit</button>
-      <button class="button button--secondary admin-delete-prayer" type="button" data-id="${prayer.id}">Delete</button>
+      >` + t('adminPrayerEdit') + `</button>
+      <button class="button button--secondary admin-delete-prayer" type="button" data-id="${prayer.id}">${t('adminPrayerDelete')}</button>
       <a class="share-link" href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noreferrer">Facebook</a>
       <a class="share-link" href="https://wa.me/?text=${shareText}%20${shareUrl}" target="_blank" rel="noreferrer">WhatsApp</a>
       <a class="share-link" href="https://t.me/share/url?url=${shareUrl}&text=${shareText}" target="_blank" rel="noreferrer">Telegram</a>
@@ -167,15 +752,15 @@ function renderPrayerActions(prayer) {
 async function loadOverview() {
   const stats = await api('/api/admin/overview');
   adminStats.innerHTML = `
-    <article class="admin-stat"><span>Prayers</span><strong>${stats.prayers}</strong></article>
-    <article class="admin-stat"><span>Deleted Prayers</span><strong>${stats.deletedPrayers}</strong></article>
-    <article class="admin-stat"><span>Events</span><strong>${stats.events}</strong></article>
-    <article class="admin-stat"><span>Members</span><strong>${stats.members}</strong></article>
-    <article class="admin-stat"><span>Pending</span><strong>${stats.pendingMembers}</strong></article>
-    <article class="admin-stat"><span>Approved</span><strong>${stats.approvedMembers}</strong></article>
-    <article class="admin-stat"><span>Visits</span><strong>${stats.visits}</strong></article>
-    <article class="admin-stat"><span>Resources</span><strong>${stats.resources}</strong></article>
-    <article class="admin-stat"><span>Active Links</span><strong>${stats.activeLinks}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatPrayers')}</span><strong>${stats.prayers}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatDeletedPrayers')}</span><strong>${stats.deletedPrayers}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatEvents')}</span><strong>${stats.events}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatMembers')}</span><strong>${stats.members}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatPending')}</span><strong>${stats.pendingMembers}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatApproved')}</span><strong>${stats.approvedMembers}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatVisits')}</span><strong>${stats.visits}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatResources')}</span><strong>${stats.resources}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatActiveLinks')}</span><strong>${stats.activeLinks}</strong></article>
   `;
 }
 
@@ -190,7 +775,7 @@ async function loadApprovedMembers() {
   )).join('');
 
   if (members.length === 0) {
-    memberSelect.innerHTML = '<option value="">No approved members available</option>';
+    memberSelect.innerHTML = `<option value="">${t('adminNoApprovedMembers')}</option>`;
   }
 }
 
@@ -203,10 +788,10 @@ async function loadMemberLinks() {
   memberLinksList.innerHTML = links.map((link) => {
     const fullLink = `${window.location.origin}/community?access=${link.token}`;
     const status = link.usedAt
-      ? 'Used'
+      ? t('adminStatusUsed')
       : new Date(link.expiresAt).getTime() < Date.now()
-        ? 'Expired'
-        : 'Active';
+        ? t('adminStatusExpired')
+        : t('adminStatusActive');
 
     return `
       <article class="admin-item">
@@ -214,16 +799,16 @@ async function loadMemberLinks() {
           <p class="section-tag">${escapeHtml(status)}</p>
           <h3>${escapeHtml(link.fullName)}</h3>
           <p>${escapeHtml(link.email)}</p>
-          <p>Expires: ${escapeHtml(new Date(link.expiresAt).toLocaleString())}</p>
+          <p>${t('adminMemberExpires')} ${escapeHtml(new Date(link.expiresAt).toLocaleString())}</p>
           <p class="admin-link">${escapeHtml(fullLink)}</p>
         </div>
         <div class="admin-item__actions">
-          <button class="button button--secondary copy-member-link" type="button" data-link="${escapeHtml(fullLink)}">Copy link</button>
-          <a class="button button--secondary" href="${escapeHtml(fullLink)}" target="_blank" rel="noreferrer">Open</a>
+          <button class="button button--secondary copy-member-link" type="button" data-link="${escapeHtml(fullLink)}">${t('adminMemberCopyLink')}</button>
+          <a class="button button--secondary" href="${escapeHtml(fullLink)}" target="_blank" rel="noreferrer">${t('adminMemberOpen')}</a>
         </div>
       </article>
     `;
-  }).join('') || '<p class="empty-state">No community links yet.</p>';
+  }).join('') || `<p class="empty-state">${t('adminMemberLinksEmpty')}</p>`;
 
   memberLinksList.querySelectorAll('.copy-member-link').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -233,12 +818,12 @@ async function loadMemberLinks() {
       }
       try {
         await navigator.clipboard.writeText(link);
-        button.textContent = 'Copied';
+        button.textContent = t('adminMemberCopied');
         setTimeout(() => {
-          button.textContent = 'Copy link';
+          button.textContent = t('adminMemberCopyLink');
         }, 1800);
       } catch {
-        button.textContent = 'Copy failed';
+        button.textContent = t('adminMemberCopyFailed');
       }
     });
   });
@@ -259,14 +844,14 @@ async function loadResources() {
         <p><a href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer">${escapeHtml(resource.url)}</a></p>
       </div>
       <div class="admin-item__actions">
-        <button class="button button--secondary delete-resource" type="button" data-id="${resource.id}">Delete</button>
+        <button class="button button--secondary delete-resource" type="button" data-id="${resource.id}">${t('adminResourceDelete')}</button>
       </div>
     </article>
-  `).join('') || '<p class="empty-state">No resources published yet.</p>';
+  `).join('') || `<p class="empty-state">${t('adminResourceEmpty')}</p>`;
 
   resourceList.querySelectorAll('.delete-resource').forEach((button) => {
     button.addEventListener('click', async () => {
-      const confirmed = window.confirm('Delete this resource?');
+      const confirmed = window.confirm(t('adminResourceDeleteConfirm'));
       if (!confirmed) {
         return;
       }
@@ -277,7 +862,50 @@ async function loadResources() {
         });
         await Promise.all([loadResources(), loadOverview()]);
       } catch (error) {
-        resourceFeedback.textContent = error instanceof Error ? error.message : 'Delete failed.';
+        resourceFeedback.textContent = error instanceof Error ? error.message : t('adminResourceDeleteFailed');
+      }
+    });
+  });
+}
+
+async function loadGallery() {
+  if (!galleryList) {
+    return;
+  }
+
+  const media = await api('/api/admin/gallery');
+  galleryList.innerHTML = media.map((item) => `
+    <article class="admin-item">
+      <div>
+        <p class="section-tag">${escapeHtml(item.mediaType)}</p>
+        <h3>${escapeHtml(item.title || '')}</h3>
+        <p>${escapeHtml(item.caption || '')}</p>
+        ${item.mediaType === 'video'
+          ? `<video controls preload="metadata" style="max-width: 320px; border-radius: 0.8rem; background: #000;"><source src="${escapeHtml(item.mediaUrl)}"></video>`
+          : `<p><img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.title || '')}" style="max-width: 220px; border-radius: 0.8rem;"></p>`}
+      </div>
+      <div class="admin-item__actions">
+        <button class="button button--secondary delete-gallery-item" type="button" data-id="${item.id}">${t('adminGalleryDelete')}</button>
+      </div>
+    </article>
+  `).join('') || `<p class="empty-state">${t('adminGalleryEmpty')}</p>`;
+
+  galleryList.querySelectorAll('.delete-gallery-item').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const confirmed = window.confirm(t('adminGalleryDeleteConfirm'));
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        await api(`/api/admin/gallery/${button.dataset.id}`, {
+          method: 'DELETE',
+        });
+        await loadGallery();
+      } catch (error) {
+        if (galleryFeedback) {
+          galleryFeedback.textContent = error instanceof Error ? error.message : t('adminGalleryDeleteFailed');
+        }
       }
     });
   });
@@ -292,11 +920,11 @@ async function loadEvents() {
   eventAdminList.innerHTML = events.map((eventItem) => `
     <article class="admin-item">
       <div>
-        <p class="section-tag">${escapeHtml(eventItem.isPublished ? 'Published' : 'Draft')}</p>
+        <p class="section-tag">${escapeHtml(eventItem.isPublished ? t('adminEventPublished') : t('adminEventDraft'))}</p>
         <h3>${escapeHtml(eventItem.title)}</h3>
         <p>${escapeHtml(eventItem.category)}</p>
         <p><strong>${escapeHtml(eventItem.eventDate)} ${escapeHtml(eventItem.eventStartTime)}${eventItem.eventEndTime ? ` - ${escapeHtml(eventItem.eventEndTime)}` : ''}</strong></p>
-        <p>${escapeHtml(eventItem.location || 'No location provided')}</p>
+        <p>${escapeHtml(eventItem.location || t('adminEventNoLocation'))}</p>
         <p>${escapeHtml(eventItem.details)}</p>
         ${eventItem.documentUrl ? `<p><a href="${escapeHtml(eventItem.documentUrl)}" target="_blank" rel="noreferrer">${escapeHtml(eventItem.documentName || 'Open document')}</a></p>` : ''}
         ${eventItem.externalLink ? `<p><a href="${escapeHtml(eventItem.externalLink)}" target="_blank" rel="noreferrer">${escapeHtml(eventItem.externalLink)}</a></p>` : ''}
@@ -317,9 +945,9 @@ async function loadEvents() {
           data-documenturl="${escapeHtml(eventItem.documentUrl || '')}"
           data-documentname="${escapeHtml(eventItem.documentName || '')}"
           data-externallink="${escapeHtml(eventItem.externalLink || '')}"
-        >Edit</button>
-        <button class="button button--secondary admin-toggle-event-publish" type="button" data-id="${eventItem.id}" data-ispublished="${eventItem.isPublished ? 'true' : 'false'}">${eventItem.isPublished ? 'Hide from users' : 'Post to users'}</button>
-        <button class="button button--secondary admin-delete-event" type="button" data-id="${eventItem.id}">Delete</button>
+        >${t('adminEventEdit')}</button>
+        <button class="button button--secondary admin-toggle-event-publish" type="button" data-id="${eventItem.id}" data-ispublished="${eventItem.isPublished ? 'true' : 'false'}">${eventItem.isPublished ? t('adminEventHide') : t('adminEventPost')}</button>
+        <button class="button button--secondary admin-delete-event" type="button" data-id="${eventItem.id}">${t('adminEventDelete')}</button>
       </div>
     </article>
   `).join('') || '<p class="empty-state">No events published yet.</p>';
@@ -340,13 +968,13 @@ async function loadEvents() {
         documentName: button.dataset.documentname || '',
         externalLink: button.dataset.externallink || '',
       });
-      eventFeedback.textContent = `Editing ${button.dataset.title || 'event'}`;
+      eventFeedback.textContent = `${t('adminEventEditing')}: ${button.dataset.title || ''}`;
     });
   });
 
   eventAdminList.querySelectorAll('.admin-delete-event').forEach((button) => {
     button.addEventListener('click', async () => {
-      const confirmed = window.confirm('Delete this event?');
+      const confirmed = window.confirm(t('adminEventDeleteConfirm'));
       if (!confirmed) {
         return;
       }
@@ -357,7 +985,7 @@ async function loadEvents() {
         });
         await Promise.all([loadEvents(), loadOverview()]);
       } catch (error) {
-        eventFeedback.textContent = error instanceof Error ? error.message : 'Delete failed.';
+        eventFeedback.textContent = error instanceof Error ? error.message : t('adminEventDeleteFailed');
       }
     });
   });
@@ -373,7 +1001,7 @@ async function loadEvents() {
         });
         await Promise.all([loadEvents(), loadOverview()]);
       } catch (error) {
-        eventFeedback.textContent = error instanceof Error ? error.message : 'Publish update failed.';
+        eventFeedback.textContent = error instanceof Error ? error.message : t('adminEventPublishFailed');
       }
     });
   });
@@ -395,7 +1023,7 @@ async function loadPrayers() {
       </div>
       ${renderPrayerActions(prayer)}
     </article>
-  `).join('') || '<p class="empty-state">No prayers are available.</p>';
+  `).join('') || `<p class="empty-state">${t('adminPrayerEmpty')}</p>`;
 
   prayerAdminList.querySelectorAll('.admin-edit-prayer').forEach((button) => {
     button.addEventListener('click', () => {
@@ -408,13 +1036,13 @@ async function loadPrayers() {
       };
 
       fillPrayerForm(prayer);
-      prayerFeedback.textContent = `Editing ${prayer.title}`;
+      prayerFeedback.textContent = `${t('adminPrayerEditing')}: ${prayer.title}`;
     });
   });
 
   prayerAdminList.querySelectorAll('.admin-delete-prayer').forEach((button) => {
     button.addEventListener('click', async () => {
-      const confirmed = window.confirm('Delete this prayer?');
+      const confirmed = window.confirm(t('adminPrayerDeleteConfirm'));
       if (!confirmed) {
         return;
       }
@@ -425,7 +1053,7 @@ async function loadPrayers() {
         });
         await Promise.all([loadPrayers(), loadDeletedPrayers(), loadOverview()]);
       } catch (error) {
-        prayerFeedback.textContent = error instanceof Error ? error.message : 'Delete failed.';
+        prayerFeedback.textContent = error instanceof Error ? error.message : t('adminPrayerDeleteFailed');
       }
     });
   });
@@ -441,16 +1069,16 @@ async function loadDeletedPrayers() {
   prayerTrashList.innerHTML = deletedPrayers.map((prayer) => `
     <article class="admin-item">
       <div>
-        <p class="section-tag">Deleted</p>
+        <p class="section-tag">${t('adminPrayerDeletedTag')}</p>
         <h3>${escapeHtml(prayer.title)}</h3>
         <p><strong>${escapeHtml(prayer.scheduledFor)}</strong></p>
         <p>${escapeHtml(prayer.content)}</p>
       </div>
       <div class="admin-item__actions">
-        <button class="button button--primary restore-prayer" type="button" data-id="${prayer.id}">Restore</button>
+        <button class="button button--primary restore-prayer" type="button" data-id="${prayer.id}">${t('adminPrayerRestore')}</button>
       </div>
     </article>
-  `).join('') || '<p class="empty-state">Trash is empty.</p>';
+  `).join('') || `<p class="empty-state">${t('adminPrayerTrashEmpty')}</p>`;
 
   prayerTrashList.querySelectorAll('.restore-prayer').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -458,10 +1086,10 @@ async function loadDeletedPrayers() {
         await api(`/api/admin/prayers/${button.dataset.id}/restore`, {
           method: 'POST',
         });
-        prayerFeedback.textContent = 'Prayer restored.';
+        prayerFeedback.textContent = t('adminPrayerRestored');
         await Promise.all([loadPrayers(), loadDeletedPrayers(), loadOverview()]);
       } catch (error) {
-        prayerFeedback.textContent = error instanceof Error ? error.message : 'Restore failed.';
+        prayerFeedback.textContent = error instanceof Error ? error.message : t('adminPrayerRestoreFailed');
       }
     });
   });
@@ -482,18 +1110,18 @@ async function loadRegistrations() {
         <p class="section-tag" style="${registration.status === 'pending' ? 'background-color: #fff3cd; color: #856404;' : registration.status === 'approved' ? 'background-color: #d4edda; color: #155724;' : 'background-color: #f8d7da; color: #721c24;'} padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85rem;">${escapeHtml(registration.status.toUpperCase())}</p>
         <h3>${escapeHtml(registration.fullName)}</h3>
         <p>${escapeHtml(registration.email)}</p>
-        <p>${escapeHtml(registration.phone || 'No phone provided')}</p>
-        <p>${escapeHtml(registration.city || 'No city provided')}</p>
-        <p>${escapeHtml(registration.message || 'No message provided')}</p>
+        <p>${escapeHtml(registration.phone || t('adminRegNoPhone'))}</p>
+        <p>${escapeHtml(registration.city || t('adminRegNoCity'))}</p>
+        <p>${escapeHtml(registration.message || t('adminRegNoMessage'))}</p>
       </div>
       <div class="admin-item__actions">
-        <button class="button button--primary admin-registration-status" type="button" data-id="${registration.id}" data-status="approved">Approve</button>
-        <button class="button button--secondary admin-registration-status" type="button" data-id="${registration.id}" data-status="rejected">Reject</button>
-        ${registration.status !== 'pending' ? `<button class="button button--secondary admin-registration-status" type="button" data-id="${registration.id}" data-status="pending">Undo</button>` : ''}
-        <button class="button button--secondary admin-registration-delete" type="button" data-id="${registration.id}">Delete</button>
+        <button class="button button--primary admin-registration-status" type="button" data-id="${registration.id}" data-status="approved">${t('adminRegApprove')}</button>
+        <button class="button button--secondary admin-registration-status" type="button" data-id="${registration.id}" data-status="rejected">${t('adminRegReject')}</button>
+        ${registration.status !== 'pending' ? `<button class="button button--secondary admin-registration-status" type="button" data-id="${registration.id}" data-status="pending">${t('adminRegUndo')}</button>` : ''}
+        <button class="button button--secondary admin-registration-delete" type="button" data-id="${registration.id}">${t('adminRegDelete')}</button>
       </div>
     </article>
-  `).join('') || '<p class="empty-state">No registrations yet.</p>';
+  `).join('') || `<p class="empty-state">${t('adminRegEmpty')}</p>`;
 
   registrationList.querySelectorAll('.admin-registration-status').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -504,14 +1132,14 @@ async function loadRegistrations() {
         });
         await Promise.all([loadRegistrations(), loadOverview()]);
       } catch (error) {
-        loginFeedback.textContent = error instanceof Error ? error.message : 'Status update failed.';
+        loginFeedback.textContent = error instanceof Error ? error.message : t('adminRegStatusFailed');
       }
     });
   });
 
   registrationList.querySelectorAll('.admin-registration-delete').forEach((button) => {
     button.addEventListener('click', async () => {
-      const confirmed = window.confirm('Delete this registration?');
+      const confirmed = window.confirm(t('adminRegDeleteConfirm'));
       if (!confirmed) {
         return;
       }
@@ -522,7 +1150,7 @@ async function loadRegistrations() {
         });
         await Promise.all([loadRegistrations(), loadOverview()]);
       } catch (error) {
-        loginFeedback.textContent = error instanceof Error ? error.message : 'Delete failed.';
+        loginFeedback.textContent = error instanceof Error ? error.message : t('adminRegDeleteFailed');
       }
     });
   });
@@ -538,7 +1166,7 @@ async function loadVisitors() {
       <td>${escapeHtml(visitor.ipAddress || '-')}</td>
       <td>${escapeHtml(visitor.userAgent || '-')}</td>
     </tr>
-  `).join('') || '<tr><td colspan="5">No visit records yet.</td></tr>';
+  `).join('') || `<tr><td colspan="5">${t('adminVisitorEmpty')}</td></tr>`;
 }
 
 async function loadSystemLogs() {
@@ -558,7 +1186,24 @@ async function loadSystemLogs() {
       <td>${escapeHtml(String(log.statusCode ?? '-'))}</td>
       <td>${escapeHtml(log.details || '-')}</td>
     </tr>
-  `).join('') || '<tr><td colspan="8">No system log records yet.</td></tr>';
+  `).join('') || `<tr><td colspan="8">${t('adminLogEmpty')}</td></tr>`;
+}
+
+async function loadHomepageEditorContent() {
+  if (!homepageIndexSource || !homepageScriptSource || !homepageEditorFeedback) {
+    return;
+  }
+
+  homepageEditorFeedback.textContent = t('adminHomeEditorLoading');
+
+  try {
+    const content = await api('/api/admin/homepage-content');
+    homepageIndexSource.value = typeof content.indexHtml === 'string' ? content.indexHtml : '';
+    homepageScriptSource.value = typeof content.scriptJs === 'string' ? content.scriptJs : '';
+    homepageEditorFeedback.textContent = t('adminHomeEditorLoaded');
+  } catch (error) {
+    homepageEditorFeedback.textContent = error instanceof Error ? error.message : t('adminHomeEditorFailed');
+  }
 }
 
 async function hydrateDashboard() {
@@ -573,7 +1218,10 @@ async function hydrateDashboard() {
     loadApprovedMembers(),
     loadMemberLinks(),
     loadResources(),
+    loadGallery(),
   ]);
+
+  await loadHomepageEditorContent();
 }
 
 if (loginForm && loginFeedback) {
@@ -581,7 +1229,7 @@ if (loginForm && loginFeedback) {
     event.preventDefault();
     const data = new FormData(loginForm);
 
-    loginFeedback.textContent = 'Signing in...';
+    loginFeedback.textContent = t('adminSigningIn');
 
     try {
       await api('/api/admin/login', {
@@ -594,7 +1242,7 @@ if (loginForm && loginFeedback) {
       loginForm.reset();
       await hydrateDashboard();
     } catch (error) {
-      loginFeedback.textContent = error instanceof Error ? error.message : 'Login failed.';
+      loginFeedback.textContent = error instanceof Error ? error.message : t('adminLoginFailed');
     }
   });
 }
@@ -618,7 +1266,7 @@ if (prayerForm && prayerFeedback) {
       content: formData.get('content'),
     };
 
-    prayerFeedback.textContent = 'Saving prayer...';
+    prayerFeedback.textContent = t('adminPrayerSaving');
 
     try {
       await api(id ? `/api/admin/prayers/${id}` : '/api/admin/prayers', {
@@ -626,10 +1274,10 @@ if (prayerForm && prayerFeedback) {
         body: JSON.stringify(payload),
       });
       resetPrayerForm();
-      prayerFeedback.textContent = 'Prayer saved.';
+      prayerFeedback.textContent = t('adminPrayerSaved');
       await Promise.all([loadPrayers(), loadOverview()]);
     } catch (error) {
-      prayerFeedback.textContent = error instanceof Error ? error.message : 'Prayer save failed.';
+      prayerFeedback.textContent = error instanceof Error ? error.message : t('adminPrayerSaveFailed');
     }
   });
 }
@@ -648,7 +1296,7 @@ if (eventForm && eventFeedback) {
     const formData = new FormData(eventForm);
     const id = formData.get('id');
 
-    eventFeedback.textContent = 'Saving event...';
+    eventFeedback.textContent = t('adminEventSaving');
 
     try {
       const response = await fetch(id ? `/api/admin/events/${id}` : '/api/admin/events', {
@@ -662,16 +1310,16 @@ if (eventForm && eventFeedback) {
 
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-          forceRelogin(payload?.error || 'Session expired. Please sign in again.');
+          forceRelogin(payload?.error || null);
         }
-        throw new Error(payload?.error || payload?.message || 'Event save failed.');
+        throw new Error(payload?.error || payload?.message || t('adminEventSaveFailed'));
       }
 
       resetEventForm();
-      eventFeedback.textContent = 'Event saved.';
+      eventFeedback.textContent = t('adminEventSaved');
       await Promise.all([loadEvents(), loadOverview()]);
     } catch (error) {
-      eventFeedback.textContent = error instanceof Error ? error.message : 'Event save failed.';
+      eventFeedback.textContent = error instanceof Error ? error.message : t('adminEventSaveFailed');
     }
   });
 }
@@ -685,7 +1333,7 @@ if (eventReset) {
 if (eventNewButton) {
   eventNewButton.addEventListener('click', () => {
     resetEventForm();
-    eventFeedback.textContent = 'Creating a new event.';
+    eventFeedback.textContent = t('adminEventCreatingNew');
   });
 }
 
@@ -694,7 +1342,7 @@ if (memberLinkForm && memberLinkFeedback) {
     event.preventDefault();
     const data = new FormData(memberLinkForm);
 
-    memberLinkFeedback.textContent = 'Generating access link...';
+    memberLinkFeedback.textContent = t('adminMemberGenerating');
 
     try {
       const result = await api('/api/admin/member-links', {
@@ -705,10 +1353,10 @@ if (memberLinkForm && memberLinkFeedback) {
         }),
       });
 
-      memberLinkFeedback.textContent = `Link created for ${result.member.fullName}`;
+      memberLinkFeedback.textContent = `${t('adminMemberLinkCreated')} ${result.member.fullName}`;
       await Promise.all([loadMemberLinks(), loadOverview()]);
     } catch (error) {
-      memberLinkFeedback.textContent = error instanceof Error ? error.message : 'Failed to generate link.';
+      memberLinkFeedback.textContent = error instanceof Error ? error.message : t('adminMemberGenFailed');
     }
   });
 }
@@ -718,7 +1366,7 @@ if (resourceForm && resourceFeedback) {
     event.preventDefault();
     const data = new FormData(resourceForm);
 
-    resourceFeedback.textContent = 'Publishing resource...';
+    resourceFeedback.textContent = t('adminResourcePublishing');
 
     try {
       await api('/api/admin/resources', {
@@ -726,11 +1374,119 @@ if (resourceForm && resourceFeedback) {
         body: JSON.stringify(Object.fromEntries(data.entries())),
       });
 
-      resourceFeedback.textContent = 'Resource published.';
+      resourceFeedback.textContent = t('adminResourcePublished');
       resourceForm.reset();
       await Promise.all([loadResources(), loadOverview()]);
     } catch (error) {
-      resourceFeedback.textContent = error instanceof Error ? error.message : 'Resource publish failed.';
+      resourceFeedback.textContent = error instanceof Error ? error.message : t('adminResourcePublishFailed');
+    }
+  });
+}
+
+if (galleryForm && galleryFeedback) {
+  galleryForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(galleryForm);
+
+    galleryFeedback.textContent = t('adminGalleryUploading');
+
+    try {
+      const response = await fetch('/api/admin/gallery', {
+        method: 'POST',
+        credentials: 'include',
+        body: data,
+      });
+
+      const hasJson = response.headers.get('content-type')?.includes('application/json');
+      const payload = hasJson ? await response.json() : null;
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          forceRelogin(payload?.error || null);
+        }
+        throw new Error(payload?.error || payload?.message || t('adminGalleryUploadFailed'));
+      }
+
+      galleryFeedback.textContent = t('adminGalleryUploaded');
+      galleryForm.reset();
+      await loadGallery();
+    } catch (error) {
+      galleryFeedback.textContent = error instanceof Error ? error.message : t('adminGalleryUploadFailed');
+    }
+  });
+}
+
+if (homepageEditorLoadButton) {
+  homepageEditorLoadButton.addEventListener('click', async () => {
+    await loadHomepageEditorContent();
+  });
+}
+
+if (homepageEditorForm && homepageEditorFeedback && homepageIndexSource && homepageScriptSource) {
+  homepageEditorForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    homepageEditorFeedback.textContent = t('adminHomeEditorSaving');
+
+    try {
+      await api('/api/admin/homepage-content', {
+        method: 'PUT',
+        body: JSON.stringify({
+          indexHtml: homepageIndexSource.value,
+          scriptJs: homepageScriptSource.value,
+        }),
+      });
+      homepageEditorFeedback.textContent = t('adminHomeEditorSaved');
+    } catch (error) {
+      homepageEditorFeedback.textContent = error instanceof Error ? error.message : t('adminHomeEditorFailed');
+    }
+  });
+}
+
+if (homepageTextReplaceForm && homepageTextReplaceFeedback && homepageReplaceFind && homepageReplaceWith) {
+  homepageTextReplaceForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const findText = homepageReplaceFind.value;
+    const replaceText = homepageReplaceWith.value;
+
+    if (!findText) {
+      return;
+    }
+
+    homepageTextReplaceFeedback.textContent = t('adminHomeEditorLoading');
+
+    try {
+      const content = await api('/api/admin/homepage-content');
+      const originalIndex = typeof content.indexHtml === 'string' ? content.indexHtml : '';
+      const originalScript = typeof content.scriptJs === 'string' ? content.scriptJs : '';
+
+      const indexResult = replaceTextInSource(originalIndex, findText, replaceText);
+      const scriptResult = replaceTextInSource(originalScript, findText, replaceText);
+
+      if (indexResult.replacements + scriptResult.replacements === 0) {
+        homepageTextReplaceFeedback.textContent = t('adminHomeReplaceNotFound');
+        return;
+      }
+
+      await api('/api/admin/homepage-content', {
+        method: 'PUT',
+        body: JSON.stringify({
+          indexHtml: indexResult.updatedSource,
+          scriptJs: scriptResult.updatedSource,
+        }),
+      });
+
+      if (homepageIndexSource && homepageScriptSource) {
+        homepageIndexSource.value = indexResult.updatedSource;
+        homepageScriptSource.value = scriptResult.updatedSource;
+      }
+
+      homepageTextReplaceFeedback.textContent = `${t('adminHomeReplaceSaved')} (${indexResult.replacements + scriptResult.replacements})`;
+      homepageReplaceFind.value = '';
+      homepageReplaceWith.value = '';
+    } catch (error) {
+      homepageTextReplaceFeedback.textContent = error instanceof Error ? error.message : t('adminHomeEditorFailed');
     }
   });
 }
