@@ -47,6 +47,7 @@ const adminTranslations = {
     adminPrayerEdit: 'Edit',
     adminPrayerDelete: 'Delete',
     adminPrayerRestore: 'Restore',
+    adminPrayerShareGmail: 'Gmail',
     adminPrayerSaving: 'Saving prayer...',
     adminPrayerSaved: 'Prayer saved.',
     adminPrayerSaveFailed: 'Prayer save failed.',
@@ -256,6 +257,7 @@ const adminTranslations = {
     adminPrayerEdit: 'Szerkesztés',
     adminPrayerDelete: 'Törlés',
     adminPrayerRestore: 'Visszaállítás',
+    adminPrayerShareGmail: 'Gmail',
     adminPrayerSaving: 'Ima mentése...',
     adminPrayerSaved: 'Ima mentve.',
     adminPrayerSaveFailed: 'Az ima mentése sikertelen.',
@@ -729,6 +731,9 @@ function resetEventForm() {
 function renderPrayerActions(prayer) {
   const shareText = encodeURIComponent(`${prayer.title} - ${prayer.scheduledFor}\n\n${prayer.content}`);
   const shareUrl = encodeURIComponent(`${window.location.origin}/#prayers`);
+  const emailSubject = encodeURIComponent(`${prayer.title} - Budapest Medhane Alem Church`);
+  const emailBody = encodeURIComponent(`${prayer.title} - ${prayer.scheduledFor}\n\n${prayer.content}\n\n${window.location.origin}/#prayers`);
+  const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=budapesteotc@gmail.com&su=${emailSubject}&body=${emailBody}`;
 
   return `
     <div class="admin-item__actions">
@@ -745,6 +750,7 @@ function renderPrayerActions(prayer) {
       <a class="share-link" href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noreferrer">Facebook</a>
       <a class="share-link" href="https://wa.me/?text=${shareText}%20${shareUrl}" target="_blank" rel="noreferrer">WhatsApp</a>
       <a class="share-link" href="https://t.me/share/url?url=${shareUrl}&text=${shareText}" target="_blank" rel="noreferrer">Telegram</a>
+      <a class="share-link" href="${gmailComposeUrl}" target="_blank" rel="noreferrer">${t('adminPrayerShareGmail')}</a>
     </div>
   `;
 }
