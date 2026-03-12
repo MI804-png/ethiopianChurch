@@ -7,6 +7,7 @@ import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import Database from 'better-sqlite3';
 import multer from 'multer';
@@ -66,8 +67,23 @@ type EventPayload = {
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(currentDir, '..');
-const dataDir = path.resolve(process.env.DATA_DIR || path.join(projectRoot, 'data'));
-const uploadsDir = path.resolve(process.env.UPLOADS_DIR || path.join(projectRoot, 'uploads'));
+
+dotenv.config({ path: path.join(projectRoot, '.env') });
+
+function resolveRuntimePath(configuredPath: string | undefined, fallbackPath: string) {
+  if (!configuredPath) {
+    return fallbackPath;
+  }
+
+  if (process.platform === 'win32' && configuredPath.startsWith('/') && !/^[a-zA-Z]:[\\/]/.test(configuredPath)) {
+    return fallbackPath;
+  }
+
+  return path.resolve(configuredPath);
+}
+
+const dataDir = resolveRuntimePath(process.env.DATA_DIR, path.join(projectRoot, 'data'));
+const uploadsDir = resolveRuntimePath(process.env.UPLOADS_DIR, path.join(projectRoot, 'uploads'));
 const eventUploadsDir = path.join(uploadsDir, 'events');
 const dbPath = path.join(dataDir, 'church.db');
 const jwtSecret = process.env.JWT_SECRET || 'budapest-medhane-alem-secret';
@@ -228,15 +244,24 @@ if (!userColumns.some((column) => column.name === 'password_reset_expires')) {
 }
 
 const adminRecord = db
-  .prepare('SELECT id, username FROM users WHERE role = ? LIMIT 1')
-  .get('admin') as { id: number; username: string } | undefined;
+  .prepare('SELECT id, username, password_hash as passwordHash FROM users WHERE role = ? LIMIT 1')
+  .get('admin') as { id: number; username: string; passwordHash: string } | undefined;
+
+const configuredAdminPasswordHash = bcrypt.hashSync(adminPassword, 10);
 
 if (!adminRecord) {
-  const passwordHash = bcrypt.hashSync(adminPassword, 10);
   db.prepare(
     `INSERT INTO users (username, full_name, email, password_hash, role, status, approved_at)
      VALUES (?, ?, ?, ?, 'admin', 'approved', CURRENT_TIMESTAMP)`
-  ).run(adminUsername, 'Church Administrator', 'admin@budapest-medhanealem.local', passwordHash);
+  ).run(adminUsername, 'Church Administrator', 'admin@budapest-medhanealem.local', configuredAdminPasswordHash);
+} else if (adminRecord.username !== adminUsername || !bcrypt.compareSync(adminPassword, adminRecord.passwordHash)) {
+  db.prepare(
+    `UPDATE users
+     SET username = ?,
+         password_hash = ?,
+         approved_at = COALESCE(approved_at, CURRENT_TIMESTAMP)
+     WHERE id = ?`
+  ).run(adminUsername, configuredAdminPasswordHash, adminRecord.id);
 }
 
 const prayerCount = db.prepare('SELECT COUNT(*) as count FROM prayers').get() as { count: number };
