@@ -29,6 +29,17 @@ const adminTranslations = {
     adminStatVisits: 'Visits',
     adminStatResources: 'Resources',
     adminStatActiveLinks: 'Active Links',
+    adminStatInquiries: 'Inquiries',
+    // Inquiry inbox
+    adminInquiryTag: 'Website inquiries',
+    adminInquiryTitle: 'Messages sent from the contact form',
+    adminInquiryFrom: 'From',
+    adminInquirySubject: 'Subject',
+    adminInquiryReply: 'Reply via Gmail',
+    adminInquiryDelete: 'Delete',
+    adminInquiryDeleteConfirm: 'Delete this inquiry?',
+    adminInquiryDeleteFailed: 'Delete failed.',
+    adminInquiryEmpty: 'No inquiries received yet.',
     // Prayer management
     adminPrayerTag: 'Prayer management',
     adminPrayerTitle: 'Add, edit, or delete prayers',
@@ -241,6 +252,17 @@ const adminTranslations = {
     adminStatVisits: 'Látogatások',
     adminStatResources: 'Erőforrások',
     adminStatActiveLinks: 'Aktív hivatkozások',
+    adminStatInquiries: 'Megkeresések',
+    // Inquiry inbox
+    adminInquiryTag: 'Weboldal megkeresések',
+    adminInquiryTitle: 'A kapcsolatfelvételi űrlapról érkezett üzenetek',
+    adminInquiryFrom: 'Feladó',
+    adminInquirySubject: 'Tárgy',
+    adminInquiryReply: 'Válasz Gmailben',
+    adminInquiryDelete: 'Törlés',
+    adminInquiryDeleteConfirm: 'Törli ezt a megkeresést?',
+    adminInquiryDeleteFailed: 'Törlés sikertelen.',
+    adminInquiryEmpty: 'Még nem érkezett megkeresés.',
     // Prayer management
     adminPrayerTag: 'Imák kezelése',
     adminPrayerTitle: 'Imák hozzáadása, szerkesztése vagy törlése',
@@ -489,6 +511,7 @@ const memberLinksList = document.querySelector('#member-links-list');
 const resourceForm = document.querySelector('#resource-form');
 const resourceFeedback = document.querySelector('#resource-feedback');
 const resourceList = document.querySelector('#resource-list');
+const inquiryList = document.querySelector('#inquiry-list');
 const galleryForm = document.querySelector('#gallery-form');
 const galleryFeedback = document.querySelector('#gallery-feedback');
 const galleryList = document.querySelector('#gallery-list');
@@ -771,6 +794,7 @@ async function loadOverview() {
     <article class="admin-stat"><span>${t('adminStatVisits')}</span><strong>${stats.visits}</strong></article>
     <article class="admin-stat"><span>${t('adminStatResources')}</span><strong>${stats.resources}</strong></article>
     <article class="admin-stat"><span>${t('adminStatActiveLinks')}</span><strong>${stats.activeLinks}</strong></article>
+    <article class="admin-stat"><span>${t('adminStatInquiries')}</span><strong>${stats.inquiries}</strong></article>
   `;
 }
 
@@ -834,6 +858,42 @@ async function loadMemberLinks() {
         }, 1800);
       } catch {
         button.textContent = t('adminMemberCopyFailed');
+      }
+    });
+  });
+}
+
+async function loadInquiries() {
+  if (!inquiryList) {
+    return;
+  }
+
+  const inquiries = await api('/api/admin/inquiries');
+  inquiryList.innerHTML = inquiries.map((inquiry) => {
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(inquiry.email)}&su=${encodeURIComponent('Re: ' + inquiry.subject)}&body=${encodeURIComponent('Dear ' + inquiry.name + ',\n\n')}`;
+    return `
+    <article class="admin-item">
+      <div>
+        <p class="section-tag">${new Date(inquiry.createdAt).toLocaleString()}</p>
+        <h3>${escapeHtml(inquiry.subject)}</h3>
+        <p><strong>${t('adminInquiryFrom')}:</strong> ${escapeHtml(inquiry.name)} &lt;${escapeHtml(inquiry.email)}&gt;</p>
+        <p style="white-space: pre-wrap;">${escapeHtml(inquiry.message)}</p>
+      </div>
+      <div class="admin-item__actions">
+        <a class="share-link" href="${escapeHtml(gmailUrl)}" target="_blank" rel="noreferrer">${t('adminInquiryReply')}</a>
+        <button class="button button--secondary delete-inquiry" type="button" data-id="${inquiry.id}">${t('adminInquiryDelete')}</button>
+      </div>
+    </article>`;
+  }).join('') || `<p class="empty-state">${t('adminInquiryEmpty')}</p>`;
+
+  inquiryList.querySelectorAll('.delete-inquiry').forEach((button) => {
+    button.addEventListener('click', async () => {
+      if (!window.confirm(t('adminInquiryDeleteConfirm'))) return;
+      try {
+        await api(`/api/admin/inquiries/${button.dataset.id}`, { method: 'DELETE' });
+        await Promise.all([loadInquiries(), loadOverview()]);
+      } catch (error) {
+        alert(error instanceof Error ? error.message : t('adminInquiryDeleteFailed'));
       }
     });
   });
@@ -1229,6 +1289,7 @@ async function hydrateDashboard() {
     loadMemberLinks(),
     loadResources(),
     loadGallery(),
+    loadInquiries(),
   ]);
 
   await loadHomepageEditorContent();

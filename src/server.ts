@@ -240,6 +240,15 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS inquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    message TEXT NOT NULL,
+    ip_address TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 const eventColumns = db.prepare(`PRAGMA table_info(events)`).all() as Array<{ name: string }>;
@@ -704,10 +713,11 @@ app.post('/api/public/inquiries', async (req: Request<unknown, unknown, InquiryP
     return;
   }
 
-  if (!mailTransporter || !inquiryDestination) {
-    res.status(503).json({ error: 'Inquiry email is not configured yet. Please contact the administrator directly.' });
-    return;
-  }
+  // Always save to DB so it appears in the admin inbox regardless of email outcome.
+  const clientIp = getClientIp(req) || '';
+  db.prepare(
+    `INSERT INTO inquiries (name, email, subject, message, ip_address) VALUES (?, ?, ?, ?, ?)`
+  ).run(name, email, subject, message, clientIp);
 
   const textBody = [
     'New website inquiry',
@@ -720,49 +730,49 @@ app.post('/api/public/inquiries', async (req: Request<unknown, unknown, InquiryP
     message,
   ].join('\n');
 
-  try {
-    const inquiryTimeoutMs = 15_000;
-    await Promise.race([
-      mailTransporter.sendMail({
-        from: inquiryFromAddress,
-        to: inquiryDestination,
-        replyTo: email,
-        subject: `[Website Inquiry] ${subject}`,
-        text: textBody,
-      }),
-      new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Inquiry email request timed out.')), inquiryTimeoutMs);
-      }),
-    ]);
-
-    writeActivityLog({
-      eventType: 'public_inquiry_sent',
-      method: 'POST',
-      path: '/api/public/inquiries',
-      statusCode: 201,
-      actorRole: 'guest',
-      actorName: name,
-      ipAddress: getClientIp(req) || '',
-      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-      details: `email=${email}`,
-    });
-
-    res.status(201).json({ message: 'Inquiry sent successfully.' });
-  } catch (error) {
-    writeActivityLog({
-      eventType: 'public_inquiry_failed',
-      method: 'POST',
-      path: '/api/public/inquiries',
-      statusCode: 502,
-      actorRole: 'guest',
-      actorName: name,
-      ipAddress: getClientIp(req) || '',
-      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-      details: `email=${email};reason=${error instanceof Error ? error.message : 'unknown'}`,
-    });
-
-    res.status(502).json({ error: 'Unable to deliver inquiry email right now. Please check SMTP settings and try again.' });
+  // Email delivery is best-effort; failure is non-fatal since the message is stored in the DB.
+  if (mailTransporter && inquiryDestination) {
+    try {
+      const inquiryTimeoutMs = 15_000;
+      await Promise.race([
+        mailTransporter.sendMail({
+          from: inquiryFromAddress,
+          to: inquiryDestination,
+          replyTo: email,
+          subject: `[Website Inquiry] ${subject}`,
+          text: textBody,
+        }),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Inquiry email request timed out.')), inquiryTimeoutMs);
+        }),
+      ]);
+      writeActivityLog({
+        eventType: 'public_inquiry_sent',
+        method: 'POST',
+        path: '/api/public/inquiries',
+        statusCode: 201,
+        actorRole: 'guest',
+        actorName: name,
+        ipAddress: clientIp,
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+        details: `email=${email}`,
+      });
+    } catch (error) {
+      writeActivityLog({
+        eventType: 'public_inquiry_failed',
+        method: 'POST',
+        path: '/api/public/inquiries',
+        statusCode: 201,
+        actorRole: 'guest',
+        actorName: name,
+        ipAddress: clientIp,
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+        details: `email=${email};reason=${error instanceof Error ? error.message : 'unknown'}`,
+      });
+    }
   }
+
+  res.status(201).json({ message: 'Inquiry sent successfully.' });
 });
 
 app.get('/api/public/prayers', (_req: Request, res: Response) => {
@@ -944,6 +954,7 @@ app.put(
 );
 
 app.get('/api/admin/overview', requireAdmin, (_req: Request, res: Response) => {
+  const inquiryStats = db.prepare('SELECT COUNT(*) as count FROM inquiries').get() as { count: number };
   const prayerStats = db
     .prepare(`SELECT
       SUM(CASE WHEN deleted_at IS NULL THEN 1 ELSE 0 END) as active,
@@ -981,9 +992,30 @@ app.get('/api/admin/overview', requireAdmin, (_req: Request, res: Response) => {
     resources: resourceStats.count,
     events: eventStats.count,
     activeLinks: linkStats.count,
+    inquiries: inquiryStats.count,
   });
 });
 
+app.get('/api/admin/inquiries', requireAdmin, (_req: Request, res: Response) => {
+  const inquiries = db
+    .prepare(
+      `SELECT id, name, email, subject, message, ip_address as ipAddress, created_at as createdAt
+       FROM inquiries
+       ORDER BY created_at DESC`
+    )
+    .all();
+  res.json(inquiries);
+});
+
+app.delete('/api/admin/inquiries/:id', requireAdmin, (req: Request<{ id: string }>, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: 'Invalid inquiry id.' });
+    return;
+  }
+  db.prepare('DELETE FROM inquiries WHERE id = ?').run(id);
+  res.status(200).json({ ok: true });
+});
 app.get('/api/admin/members', requireAdmin, (req: Request<unknown, unknown, unknown, { status?: string }>, res: Response) => {
   const status = req.query.status?.trim() || 'approved';
   const members = db
