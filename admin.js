@@ -142,7 +142,9 @@ const adminTranslations = {
     adminResourceTypeLabel: 'Type',
     adminResourceTypeDocument: 'Document',
     adminResourceTypeVideo: 'Video',
-    adminResourceUrlLabel: 'URL',
+    adminResourceUrlLabel: 'URL (for video or external document)',
+    adminResourceFileLabel: 'Upload document file (PDF, DOC, DOCX)',
+    adminResourceInputHint: 'For document type, provide a URL or upload a file.',
     adminResourceDescLabel: 'Description',
     adminResourceDescPlaceholder: 'Optional description',
     adminResourcePublish: 'Publish resource',
@@ -352,7 +354,9 @@ const adminTranslations = {
     adminResourceTypeLabel: 'Típus',
     adminResourceTypeDocument: 'Dokumentum',
     adminResourceTypeVideo: 'Videó',
-    adminResourceUrlLabel: 'URL',
+    adminResourceUrlLabel: 'URL (videóhoz vagy külső dokumentumhoz)',
+    adminResourceFileLabel: 'Dokumentum fájl feltöltése (PDF, DOC, DOCX)',
+    adminResourceInputHint: 'Dokumentum típusnál adjon meg URL-t vagy töltsön fel fájlt.',
     adminResourceDescLabel: 'Leírás',
     adminResourceDescPlaceholder: 'Opcionális leírás',
     adminResourcePublish: 'Erőforrás közzététele',
@@ -1375,10 +1379,21 @@ if (resourceForm && resourceFeedback) {
     resourceFeedback.textContent = t('adminResourcePublishing');
 
     try {
-      await api('/api/admin/resources', {
+      const response = await fetch('/api/admin/resources', {
         method: 'POST',
-        body: JSON.stringify(Object.fromEntries(data.entries())),
+        credentials: 'include',
+        body: data,
       });
+
+      const hasJson = response.headers.get('content-type')?.includes('application/json');
+      const payload = hasJson ? await response.json() : null;
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          forceRelogin(payload?.error || null);
+        }
+        throw new Error(payload?.error || payload?.message || t('adminResourcePublishFailed'));
+      }
 
       resourceFeedback.textContent = t('adminResourcePublished');
       resourceForm.reset();

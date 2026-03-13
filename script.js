@@ -121,7 +121,7 @@ const translations = {
     backTopBtn: 'Back to Top',
     inquiryTag: 'Inquiry form',
     inquiryTitle: 'Website inquiry and verification request',
-    inquiryDesc: 'Use this form layout as a front-end contact point for church administration. It can be connected later to the official parish email or backend service.',
+    inquiryDesc: 'Send your message directly to church administration using this form.',
     sendInquiryBtn: 'Send inquiry',
     footerAddress: 'Address',
     footerPurpose: 'Website purpose',
@@ -143,6 +143,9 @@ const translations = {
     registrationSubmitting: 'Submitting registration...',
     registrationSuccess: 'Registration received and awaiting admin approval.',
     registrationFailed: 'Registration failed.',
+    inquirySending: 'Sending inquiry...',
+    inquirySent: 'Your inquiry was sent successfully. We will get back to you soon.',
+    inquiryFailed: 'Unable to send inquiry right now. Please try again later.',
     inquiryThanksPrefix: 'Thank you',
     inquiryThanksSuffix: 'The inquiry form is visible on the site and can be connected to the official church email workflow.',
     loadPrayersFailed: 'Unable to load prayers.',
@@ -254,7 +257,7 @@ const translations = {
     backTopBtn: 'Vissza az elejére',
     inquiryTag: 'Kapcsolati űrlap',
     inquiryTitle: 'Weboldal megkeresés és ellenőrzési kérés',
-    inquiryDesc: 'Ez az űrlap elrendezés front-end kapcsolati pontként szolgál az egyházi adminisztráció számára. Később összekapcsolható a hivatalos plébániai e-maillel vagy háttérrendszerrel.',
+    inquiryDesc: 'Ezzel az űrlappal közvetlenül üzenhet az egyházi adminisztrációnak.',
     sendInquiryBtn: 'Üzenet küldése',
     footerAddress: 'Cím',
     footerPurpose: 'Weboldal célja',
@@ -276,6 +279,9 @@ const translations = {
     registrationSubmitting: 'Regisztráció küldése...',
     registrationSuccess: 'A regisztráció megérkezett és admin jóváhagyásra vár.',
     registrationFailed: 'A regisztráció sikertelen.',
+    inquirySending: 'Üzenet küldése...',
+    inquirySent: 'Az üzenet sikeresen elküldve. Hamarosan válaszolunk.',
+    inquiryFailed: 'Az üzenet most nem küldhető el. Kérjük, próbálja újra később.',
     inquiryThanksPrefix: 'Köszönjük',
     inquiryThanksSuffix: 'Az űrlap látható az oldalon, és később összeköthető a hivatalos egyházi e-mail folyamattal.',
     loadPrayersFailed: 'Az imák betöltése nem sikerült.',
@@ -387,7 +393,7 @@ const translations = {
     backTopBtn: 'ወደ ላይ ተመለስ',
     inquiryTag: 'የጥያቄ ቅጽ',
     inquiryTitle: 'የድረ-ገጽ ጥያቄ እና ማረጋገጫ ጥያቄ',
-    inquiryDesc: 'ይህን የቅጽ አቀማመጥ ለቤተክርስቲያን አስተዳደር የፊት-መጨረሻ የመገናኛ ነጥብ እንዲሆን ይጠቀሙበት። በኋላ ከይፋዊ የደብር ኢሜይል ወይም ከባክኤንድ አገልግሎት ጋር ሊገናኝ ይችላል።',
+    inquiryDesc: 'በዚህ ቅጽ መልእክትዎን በቀጥታ ወደ ቤተክርስቲያን አስተዳደር መላክ ይችላሉ።',
     sendInquiryBtn: 'መልእክት ላክ',
     footerAddress: 'አድራሻ',
     footerPurpose: 'የድረ-ገጹ ዓላማ',
@@ -409,6 +415,9 @@ const translations = {
     registrationSubmitting: 'ምዝገባ በመላክ ላይ...',
     registrationSuccess: 'ምዝገባው ተቀባይነት አግኝቶ የአድሚን ማጽደቅ ይጠብቃል።',
     registrationFailed: 'ምዝገባ አልተሳካም።',
+    inquirySending: 'ጥያቄዎን በመላክ ላይ...',
+    inquirySent: 'ጥያቄዎ በተሳካ ሁኔታ ተልኳል። በቅርቡ እንመልሳለን።',
+    inquiryFailed: 'አሁን ጥያቄ መላክ አልተቻለም። እባክዎ በኋላ ደግመው ይሞክሩ።',
     inquiryThanksPrefix: 'እናመሰግናለን',
     inquiryThanksSuffix: 'ይህ ቅጽ በድረ-ገጹ ላይ አለ እና ከይፋዊ ኢሜይል ስርዓት ጋር ሊገናኝ ይችላል።',
     loadPrayersFailed: 'ጸሎቶችን መጫን አልተቻለም።',
@@ -556,13 +565,46 @@ if (navToggle && siteNav) {
 }
 
 if (form && feedback) {
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(form);
-    const name = data.get('name');
+    const submitButton = form.querySelector('button[type="submit"]');
 
-    feedback.textContent = `${t('inquiryThanksPrefix')}, ${name}. ${t('inquiryThanksSuffix')}`;
-    form.reset();
+    feedback.textContent = t('inquirySending');
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
+    try {
+      const response = await fetch('/api/public/inquiries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: String(data.get('name') || ''),
+          email: String(data.get('email') || ''),
+          subject: String(data.get('subject') || ''),
+          message: String(data.get('message') || ''),
+        }),
+      });
+
+      const hasJson = response.headers.get('content-type')?.includes('application/json');
+      const payload = hasJson ? await response.json() : null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error || payload?.message || t('inquiryFailed'));
+      }
+
+      feedback.textContent = t('inquirySent');
+      form.reset();
+    } catch (error) {
+      feedback.textContent = error instanceof Error ? error.message : t('inquiryFailed');
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }
   });
 }
 

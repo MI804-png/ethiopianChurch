@@ -249,7 +249,7 @@
                   <h2 data-i18n="adminResourceTitle">Add prayer documents or post videos</h2>
                 </div>
               </div>
-              <form class="contact-form" id="resource-form">
+              <form class="contact-form" id="resource-form" enctype="multipart/form-data">
                 <label>
                   <span data-i18n="adminResourceTitleLabel">Resource title</span>
                   <input type="text" name="title" data-i18n-placeholder="adminResourceTitlePlaceholder" placeholder="Prayer PDF or teaching video title" required>
@@ -263,12 +263,17 @@
                 </label>
                 <label>
                   <span data-i18n="adminResourceUrlLabel">URL</span>
-                  <input type="url" name="url" placeholder="https://..." required>
+                  <input type="url" name="url" placeholder="https://...">
+                </label>
+                <label>
+                  <span data-i18n="adminResourceFileLabel">Upload document file (PDF, DOC, DOCX)</span>
+                  <input type="file" name="document" accept=".pdf,.doc,.docx">
                 </label>
                 <label>
                   <span data-i18n="adminResourceDescLabel">Description</span>
                   <textarea name="description" rows="4" data-i18n-placeholder="adminResourceDescPlaceholder" placeholder="Optional description"></textarea>
                 </label>
+                <p class="section-tag" data-i18n="adminResourceInputHint">For document type, provide a URL or upload a file.</p>
                 <button class="button button--primary" type="submit" data-i18n="adminResourcePublish">Publish resource</button>
                 <p class="form-feedback" id="resource-feedback" role="status" aria-live="polite"></p>
               </form>

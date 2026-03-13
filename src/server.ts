@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
 import Database from 'better-sqlite3';
 import multer from 'multer';
+import nodemailer from 'nodemailer';
 
 type JwtPayload = {
   userId: number;
@@ -52,6 +53,13 @@ type CommunityResourcePayload = {
   description?: string;
 };
 
+type InquiryPayload = {
+  name?: string;
+  email?: string;
+  subject?: string;
+  message?: string;
+};
+
 type EventPayload = {
   title?: string;
   category?: string;
@@ -91,17 +99,39 @@ const dataDir = resolveRuntimePath(process.env.DATA_DIR, path.join(projectRoot, 
 const uploadsDir = resolveRuntimePath(process.env.UPLOADS_DIR, path.join(projectRoot, 'uploads'));
 const eventUploadsDir = path.join(uploadsDir, 'events');
 const galleryUploadsDir = path.join(uploadsDir, 'gallery');
+const resourceUploadsDir = path.join(uploadsDir, 'resources');
 const homepageContentPath = path.join(dataDir, 'homepage-content.json');
 const dbPath = path.join(dataDir, 'church.db');
 const jwtSecret = process.env.JWT_SECRET || 'budapest-medhane-alem-secret';
 const adminUsername = process.env.ADMIN_USERNAME || 'admin';
 const adminPassword = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
 const adminSessionDays = Math.min(Math.max(Number(process.env.ADMIN_SESSION_DAYS || 30), 1), 90);
+const smtpHost = process.env.SMTP_HOST?.trim() || '';
+const parsedSmtpPort = Number(process.env.SMTP_PORT || 587);
+const smtpPort = Number.isFinite(parsedSmtpPort) ? parsedSmtpPort : 587;
+const smtpUser = process.env.SMTP_USER?.trim() || '';
+const smtpPass = process.env.SMTP_PASS?.trim() || '';
+const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
+const inquiryDestination = process.env.CONTACT_EMAIL_TO?.trim() || '';
+const inquiryFromAddress = process.env.CONTACT_EMAIL_FROM?.trim() || smtpUser || 'no-reply@localhost';
+const canSendInquiryEmail = Boolean(smtpHost && smtpUser && smtpPass && inquiryDestination);
+const mailTransporter = canSendInquiryEmail
+  ? nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    })
+  : null;
 const port = Number(process.env.PORT || 3000);
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(eventUploadsDir, { recursive: true });
 fs.mkdirSync(galleryUploadsDir, { recursive: true });
+fs.mkdirSync(resourceUploadsDir, { recursive: true });
 
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
@@ -277,6 +307,39 @@ const uploadGalleryMedia = multer({
 
     if (!allowedImageExtensions.has(extension) && !allowedVideoExtensions.has(extension)) {
       callback(new Error('Unsupported gallery file type. Upload an image or video file.'));
+      return;
+    }
+
+    callback(null, true);
+  },
+});
+
+const resourceStorage = multer.diskStorage({
+  destination: (_req, _file, callback) => {
+    callback(null, resourceUploadsDir);
+  },
+  filename: (_req, file, callback) => {
+    const extension = path.extname(file.originalname || '').toLowerCase();
+    const baseName = path.basename(file.originalname || 'resource', extension)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 60) || 'resource';
+    callback(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}-${baseName}${extension}`);
+  },
+});
+
+const uploadResourceDocument = multer({
+  storage: resourceStorage,
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, callback) => {
+    const allowedExtensions = new Set(['.pdf', '.doc', '.docx']);
+    const extension = path.extname(file.originalname || '').toLowerCase();
+
+    if (!allowedExtensions.has(extension)) {
+      callback(new Error('Unsupported resource file type. Upload PDF, DOC, or DOCX.'));
       return;
     }
 
@@ -493,7 +556,11 @@ function normalizeEventPayload(body: EventPayload) {
   };
 }
 
-function getClientIp(req: Request) {
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function getClientIp(req: Pick<Request, 'headers' | 'ip'>) {
   const forwardedFor = req.headers['x-forwarded-for'];
   return Array.isArray(forwardedFor)
     ? forwardedFor[0]
@@ -611,6 +678,70 @@ app.post('/api/public/visits', (req: Request<unknown, unknown, VisitorPayload>, 
   ).run(pagePath, referrer || null, ipAddress || '', userAgent);
 
   res.status(201).json({ ok: true });
+});
+
+app.post('/api/public/inquiries', async (req: Request<unknown, unknown, InquiryPayload>, res: Response) => {
+  const name = req.body.name?.trim() || '';
+  const email = req.body.email?.trim().toLowerCase() || '';
+  const subject = req.body.subject?.trim() || '';
+  const message = req.body.message?.trim() || '';
+
+  if (!name || !email || !subject || !message) {
+    res.status(400).json({ error: 'Name, email, subject, and message are required.' });
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    res.status(400).json({ error: 'A valid email address is required.' });
+    return;
+  }
+
+  if (name.length > 120 || subject.length > 200 || message.length > 5000) {
+    res.status(400).json({ error: 'Inquiry content is too long.' });
+    return;
+  }
+
+  if (!mailTransporter || !inquiryDestination) {
+    res.status(503).json({ error: 'Inquiry email is not configured yet. Please contact the administrator directly.' });
+    return;
+  }
+
+  const textBody = [
+    'New website inquiry',
+    '',
+    `Name: ${name}`,
+    `Email: ${email}`,
+    `Subject: ${subject}`,
+    '',
+    'Message:',
+    message,
+  ].join('\n');
+
+  try {
+    await mailTransporter.sendMail({
+      from: inquiryFromAddress,
+      to: inquiryDestination,
+      replyTo: email,
+      subject: `[Website Inquiry] ${subject}`,
+      text: textBody,
+    });
+
+    writeActivityLog({
+      eventType: 'public_inquiry_sent',
+      method: 'POST',
+      path: '/api/public/inquiries',
+      statusCode: 201,
+      actorRole: 'guest',
+      actorName: name,
+      ipAddress: getClientIp(req) || '',
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+      details: `email=${email}`,
+    });
+
+    res.status(201).json({ message: 'Inquiry sent successfully.' });
+  } catch {
+    res.status(502).json({ error: 'Unable to deliver inquiry email right now. Please try again later.' });
+  }
 });
 
 app.get('/api/public/prayers', (_req: Request, res: Response) => {
@@ -994,14 +1125,38 @@ app.delete('/api/admin/gallery/:id', requireAdmin, (req: Request<{ id: string }>
   res.json({ message: 'Gallery item deleted.' });
 });
 
-app.post('/api/admin/resources', requireAdmin, (req: Request<unknown, unknown, CommunityResourcePayload>, res: Response) => {
+app.post('/api/admin/resources', requireAdmin, uploadResourceDocument.single('document'), (req: Request<unknown, unknown, CommunityResourcePayload>, res: Response) => {
   const title = req.body.title?.trim();
   const type = req.body.type === 'video' ? 'video' : req.body.type === 'document' ? 'document' : '';
   const url = req.body.url?.trim();
   const description = req.body.description?.trim() || '';
+  const uploadedDocumentUrl = req.file ? `/uploads/resources/${req.file.filename}` : '';
+  const resourceUrl = uploadedDocumentUrl || url || '';
 
-  if (!title || !type || !url) {
-    res.status(400).json({ error: 'Title, type, and URL are required.' });
+  if (!title || !type) {
+    if (uploadedDocumentUrl) {
+      deleteUploadedFile(uploadedDocumentUrl);
+    }
+    res.status(400).json({ error: 'Title and type are required.' });
+    return;
+  }
+
+  if (type === 'video' && !url) {
+    if (uploadedDocumentUrl) {
+      deleteUploadedFile(uploadedDocumentUrl);
+    }
+    res.status(400).json({ error: 'Video resources require a URL.' });
+    return;
+  }
+
+  if (type === 'video' && uploadedDocumentUrl) {
+    deleteUploadedFile(uploadedDocumentUrl);
+    res.status(400).json({ error: 'Video resources cannot include an uploaded document file.' });
+    return;
+  }
+
+  if (type === 'document' && !resourceUrl) {
+    res.status(400).json({ error: 'Document resources require a URL or uploaded file.' });
     return;
   }
 
@@ -1010,7 +1165,7 @@ app.post('/api/admin/resources', requireAdmin, (req: Request<unknown, unknown, C
       `INSERT INTO community_resources (title, type, url, description, created_by)
        VALUES (?, ?, ?, ?, ?)`
     )
-    .run(title, type, url, description, res.locals.admin.userId);
+    .run(title, type, resourceUrl, description, res.locals.admin.userId);
 
   const resource = db
     .prepare(
@@ -1025,6 +1180,16 @@ app.post('/api/admin/resources', requireAdmin, (req: Request<unknown, unknown, C
 
 app.delete('/api/admin/resources/:id', requireAdmin, (req: Request<{ id: string }>, res: Response) => {
   const id = Number(req.params.id);
+  const resource = db
+    .prepare(`SELECT url FROM community_resources WHERE id = ?`)
+    .get(id) as { url: string } | undefined;
+
+  if (!resource) {
+    res.status(404).json({ error: 'Resource not found.' });
+    return;
+  }
+
+  deleteUploadedFile(resource.url);
   const result = db.prepare('DELETE FROM community_resources WHERE id = ?').run(id);
 
   if (result.changes === 0) {
@@ -1670,6 +1835,9 @@ app.use((req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`Church website server running on http://localhost:${port}`);
   console.log(`Admin login username: ${adminUsername}`);
+  if (!canSendInquiryEmail) {
+    console.log('Inquiry email is disabled. Set SMTP_* and CONTACT_EMAIL_* values in .env to enable it.');
+  }
   if (!process.env.ADMIN_PASSWORD) {
     console.log('Default admin password in use. Set ADMIN_PASSWORD before production deployment.');
   }
