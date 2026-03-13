@@ -120,6 +120,9 @@ const mailTransporter = canSendInquiryEmail
       host: smtpHost,
       port: smtpPort,
       secure: smtpSecure,
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 15_000,
       auth: {
         user: smtpUser,
         pass: smtpPass,
@@ -718,13 +721,19 @@ app.post('/api/public/inquiries', async (req: Request<unknown, unknown, InquiryP
   ].join('\n');
 
   try {
-    await mailTransporter.sendMail({
-      from: inquiryFromAddress,
-      to: inquiryDestination,
-      replyTo: email,
-      subject: `[Website Inquiry] ${subject}`,
-      text: textBody,
-    });
+    const inquiryTimeoutMs = 15_000;
+    await Promise.race([
+      mailTransporter.sendMail({
+        from: inquiryFromAddress,
+        to: inquiryDestination,
+        replyTo: email,
+        subject: `[Website Inquiry] ${subject}`,
+        text: textBody,
+      }),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Inquiry email request timed out.')), inquiryTimeoutMs);
+      }),
+    ]);
 
     writeActivityLog({
       eventType: 'public_inquiry_sent',
@@ -739,8 +748,20 @@ app.post('/api/public/inquiries', async (req: Request<unknown, unknown, InquiryP
     });
 
     res.status(201).json({ message: 'Inquiry sent successfully.' });
-  } catch {
-    res.status(502).json({ error: 'Unable to deliver inquiry email right now. Please try again later.' });
+  } catch (error) {
+    writeActivityLog({
+      eventType: 'public_inquiry_failed',
+      method: 'POST',
+      path: '/api/public/inquiries',
+      statusCode: 502,
+      actorRole: 'guest',
+      actorName: name,
+      ipAddress: getClientIp(req) || '',
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+      details: `email=${email};reason=${error instanceof Error ? error.message : 'unknown'}`,
+    });
+
+    res.status(502).json({ error: 'Unable to deliver inquiry email right now. Please check SMTP settings and try again.' });
   }
 });
 

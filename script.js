@@ -576,11 +576,14 @@ if (form && feedback) {
     }
 
     try {
+      const controller = new AbortController();
+      const requestTimeout = window.setTimeout(() => controller.abort(), 20000);
       const response = await fetch('/api/public/inquiries', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           name: String(data.get('name') || ''),
           email: String(data.get('email') || ''),
@@ -588,6 +591,7 @@ if (form && feedback) {
           message: String(data.get('message') || ''),
         }),
       });
+      window.clearTimeout(requestTimeout);
 
       const hasJson = response.headers.get('content-type')?.includes('application/json');
       const payload = hasJson ? await response.json() : null;
@@ -599,7 +603,11 @@ if (form && feedback) {
       feedback.textContent = t('inquirySent');
       form.reset();
     } catch (error) {
-      feedback.textContent = error instanceof Error ? error.message : t('inquiryFailed');
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        feedback.textContent = 'Inquiry request timed out. Please try again.';
+      } else {
+        feedback.textContent = error instanceof Error ? error.message : t('inquiryFailed');
+      }
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
