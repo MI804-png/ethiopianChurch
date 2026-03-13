@@ -95,13 +95,28 @@ function resolveRuntimePath(configuredPath: string | undefined, fallbackPath: st
   return path.resolve(configuredPath);
 }
 
-const dataDir = resolveRuntimePath(process.env.DATA_DIR, path.join(projectRoot, 'data'));
-const uploadsDir = resolveRuntimePath(process.env.UPLOADS_DIR, path.join(projectRoot, 'uploads'));
+const renderPersistentRoot = '/opt/render/project/src/persistent';
+const defaultDataDir = path.join(projectRoot, 'data');
+const defaultUploadsDir = path.join(projectRoot, 'uploads');
+const renderDataDir = path.join(renderPersistentRoot, 'data');
+const renderUploadsDir = path.join(renderPersistentRoot, 'uploads');
+const hasRenderPersistentDisk = process.platform !== 'win32' && fs.existsSync(renderPersistentRoot);
+
+const dataDir = resolveRuntimePath(
+  process.env.DATA_DIR,
+  hasRenderPersistentDisk ? renderDataDir : defaultDataDir
+);
+const uploadsDir = resolveRuntimePath(
+  process.env.UPLOADS_DIR,
+  hasRenderPersistentDisk ? renderUploadsDir : defaultUploadsDir
+);
 const eventUploadsDir = path.join(uploadsDir, 'events');
 const galleryUploadsDir = path.join(uploadsDir, 'gallery');
 const resourceUploadsDir = path.join(uploadsDir, 'resources');
 const homepageContentPath = path.join(dataDir, 'homepage-content.json');
+const legacyHomepageContentPath = path.join(defaultDataDir, 'homepage-content.json');
 const dbPath = path.join(dataDir, 'church.db');
+const legacyDbPath = path.join(defaultDataDir, 'church.db');
 const jwtSecret = process.env.JWT_SECRET || 'budapest-medhane-alem-secret';
 const adminUsername = process.env.ADMIN_USERNAME || 'admin';
 const adminPassword = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
@@ -135,6 +150,22 @@ fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(eventUploadsDir, { recursive: true });
 fs.mkdirSync(galleryUploadsDir, { recursive: true });
 fs.mkdirSync(resourceUploadsDir, { recursive: true });
+
+// If storage location changed to persistent disk, carry existing data forward once.
+if (dbPath !== legacyDbPath && !fs.existsSync(dbPath) && fs.existsSync(legacyDbPath)) {
+  fs.copyFileSync(legacyDbPath, dbPath);
+}
+if (
+  homepageContentPath !== legacyHomepageContentPath
+  && !fs.existsSync(homepageContentPath)
+  && fs.existsSync(legacyHomepageContentPath)
+) {
+  fs.copyFileSync(legacyHomepageContentPath, homepageContentPath);
+}
+
+console.info(
+  `[storage] dataDir=${dataDir} uploadsDir=${uploadsDir} renderDiskDetected=${hasRenderPersistentDisk}`
+);
 
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
