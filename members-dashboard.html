@@ -277,9 +277,14 @@
       <div id="prayers-container" class="section-grid"></div>
     </div>
 
-    <!-- Quick Links -->
+    <!-- Resources -->
     <div class="dashboard-section">
       <h2 data-i18n="dashboardResources">Community Resources</h2>
+      <div id="resources-container" class="section-grid"></div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="dashboard-section">
       <div class="nav-links">
         <a href="/" data-i18n="navHome">← Back to Home</a>
         <a href="/community" data-i18n="navCommunity">Community Center</a>
@@ -298,10 +303,12 @@
         navCommunity: 'Community Center',
         noEvents: 'No upcoming events at this time.',
         noPrayers: 'No scheduled prayers at this time.',
+        noResources: 'No resources available at this time.',
         loading: 'Loading...',
         eventTime: 'Time',
         location: 'Location',
         details: 'Details',
+        download: 'Download',
       },
       hu: {
         dashboardEvents: 'Közelgő Események',
@@ -311,10 +318,12 @@
         navCommunity: 'Közösségi Központ',
         noEvents: 'Jelenleg nincsenek közelgő események.',
         noPrayers: 'Jelenleg nincsenek ütemezett imádságok.',
+        noResources: 'Jelenleg nincsenek elérhető erőforrások.',
         loading: 'Betöltés...',
         eventTime: 'Idő',
         location: 'Hely',
         details: 'Részletek',
+        download: 'Letöltés',
       },
       am: {
         dashboardEvents: 'መጪ ክስተቶች',
@@ -324,10 +333,12 @@
         navCommunity: 'ማህበረሰብ ሕንፃ',
         noEvents: 'በአሁኑ ጊዜ ምንም ክስተቶች የሉም።',
         noPrayers: 'በአሁኑ ጊዜ ምንም ተቀምጠው ሕይወት የሉም።',
+        noResources: 'በአሁኑ ጊዜ ምንም ሀብቶች የሉም።',
         loading: 'በመጫን...',
         eventTime: 'ሰዓት',
         location: 'ቦታ',
         details: 'ዝርዝሮች',
+        download: 'ዳውንሎድ',
       }
     };
 
@@ -376,6 +387,7 @@
 
         loadEvents();
         loadPrayers();
+        loadResources();
       } catch (error) {
         console.error('Auth check failed:', error);
         window.location.href = '/login';
@@ -447,6 +459,41 @@
       } catch (error) {
         console.error('Failed to load prayers:', error);
         document.getElementById('prayers-container').innerHTML = '<div class="empty-state"><p>Failed to load prayers</p></div>';
+      }
+    }
+
+    // Load resources
+    async function loadResources() {
+      try {
+        const response = await fetch('/api/community/resources', {
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          throw new Error('Resources request failed');
+        }
+
+        const resources = await response.json();
+        const container = document.getElementById('resources-container');
+        
+        if (!resources || resources.length === 0) {
+          container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div><p data-i18n="noResources">No resources available at this time.</p></div>`;
+          return;
+        }
+
+        container.innerHTML = resources
+          .map(resource => `
+            <div class="card">
+              <h3>${resource.title}</h3>
+              ${resource.description ? `<p>${resource.description}</p>` : ''}
+              <p><strong>Type:</strong> ${resource.type}</p>
+              ${resource.url ? `<p><a href="${resource.url}" target="_blank" rel="noreferrer" style="color: #c41e3a; text-decoration: none;" data-i18n="download">Download →</a></p>` : ''}
+              <div class="card-meta">Uploaded: ${new Date(resource.createdAt).toLocaleDateString()}</div>
+            </div>
+          `)
+          .join('');
+      } catch (error) {
+        console.error('Failed to load resources:', error);
+        document.getElementById('resources-container').innerHTML = '<div class="empty-state"><p>Failed to load resources</p></div>';
       }
     }
 
