@@ -497,22 +497,14 @@ app.get('/script.js', (_req: Request, res: Response) => {
 });
 app.get('/admin', sendRootFile('admin.html'));
 app.get('/admin.js', sendRootFile('admin.js'));
-app.get('/community', (_req: Request, res: Response) => {
-  res.redirect('/');
-});
-app.get('/community.js', (_req: Request, res: Response) => {
-  res.status(410).type('application/javascript').send('// community portal disabled');
-});
+app.get('/community', sendRootFile('community.html'));
+app.get('/community.js', sendRootFile('community.js'));
 
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ ok: true });
 });
-app.get('/login', (_req: Request, res: Response) => {
-  res.redirect('/');
-});
-app.get('/members-dashboard', (_req: Request, res: Response) => {
-  res.redirect('/');
-});
+app.get('/login', sendRootFile('login.html'));
+app.get('/members-dashboard', sendRootFile('members-dashboard.html'));
 
 const issueAdminToken = (payload: JwtPayload) =>
   jwt.sign(payload, jwtSecret, { expiresIn: `${adminSessionDays}d` });
@@ -1284,20 +1276,113 @@ app.delete('/api/admin/resources/:id', requireAdmin, (req: Request<{ id: string 
   res.json({ message: 'Resource deleted.' });
 });
 
-app.post('/api/community/auth/link', (_req: Request<unknown, unknown, { token?: string }>, res: Response) => {
-  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
+app.post('/api/community/auth/link', (req: Request<unknown, unknown, { token?: string }>, res: Response) => {
+  const token = req.body.token?.trim() || '';
+
+  if (!token) {
+    res.status(400).json({ error: 'Community access token is required.' });
+    return;
+  }
+
+  const link = db
+    .prepare(
+      `SELECT l.id,
+              l.used_at as usedAt,
+              l.expires_at as expiresAt,
+              u.id as userId,
+              u.full_name as fullName,
+              u.email as email,
+              u.status as status
+       FROM community_access_links l
+       JOIN users u ON u.id = l.user_id
+       WHERE l.token = ?
+       LIMIT 1`
+    )
+    .get(token) as {
+      id: number;
+      usedAt: string | null;
+      expiresAt: string;
+      userId: number;
+      fullName: string;
+      email: string;
+      status: string;
+    } | undefined;
+
+  if (!link) {
+    res.status(401).json({ error: 'Invalid community access link.' });
+    return;
+  }
+
+  if (link.status !== 'approved') {
+    res.status(403).json({ error: 'Membership is not approved.' });
+    return;
+  }
+
+  if (link.usedAt) {
+    res.status(401).json({ error: 'This community access link has already been used.' });
+    return;
+  }
+
+  if (new Date(link.expiresAt).getTime() <= Date.now()) {
+    res.status(401).json({ error: 'This community access link has expired.' });
+    return;
+  }
+
+  db.prepare(`UPDATE community_access_links SET used_at = CURRENT_TIMESTAMP WHERE id = ?`).run(link.id);
+
+  const memberToken = issueMemberToken({
+    userId: link.userId,
+    role: 'member',
+    fullName: link.fullName,
+    email: link.email,
+  });
+
+  res.cookie('church_member_session', memberToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+  });
+
+  res.json({
+    member: {
+      id: link.userId,
+      fullName: link.fullName,
+      email: link.email,
+    },
+  });
 });
 
-app.get('/api/community/session', (_req: Request, res: Response) => {
-  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
+app.get('/api/community/session', requireMember, (_req: Request, res: Response) => {
+  res.json({
+    member: {
+      id: res.locals.member.userId,
+      fullName: res.locals.member.fullName,
+      email: res.locals.member.email,
+    },
+  });
 });
 
 app.post('/api/community/logout', (_req: Request, res: Response) => {
-  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
+  res.clearCookie('church_member_session');
+  res.status(200).json({ ok: true });
 });
 
-app.get('/api/community/resources', (_req: Request, res: Response) => {
-  res.status(403).json({ error: 'Community portal is disabled. Contact the administrator.' });
+app.get('/api/community/resources', requireMember, (_req: Request, res: Response) => {
+  const resources = db
+    .prepare(
+      `SELECT id,
+              title,
+              type,
+              url,
+              description,
+              created_at as createdAt
+       FROM community_resources
+       ORDER BY created_at DESC`
+    )
+    .all();
+
+  res.json(resources);
 });
 
 app.get('/api/admin/events', requireAdmin, (_req: Request, res: Response) => {
@@ -1738,20 +1823,124 @@ app.delete('/api/admin/registrations/:id', requireAdmin, (req: Request<{ id: str
 });
 
 // Member Authentication Routes
-app.post('/api/members/register', (_req: Request<unknown, unknown, { fullName?: string; email?: string; phone?: string; city?: string; password?: string }>, res: Response) => {
-  res.status(403).json({ error: 'Member registration is disabled. Contact the administrator.' });
+app.post('/api/members/register', (req: Request<unknown, unknown, { fullName?: string; email?: string; phone?: string; city?: string; password?: string }>, res: Response) => {
+  const fullName = req.body.fullName?.trim() || '';
+  const email = req.body.email?.trim().toLowerCase() || '';
+  const phone = req.body.phone?.trim() || '';
+  const city = req.body.city?.trim() || '';
+  const password = req.body.password?.trim() || '';
+
+  if (!fullName || !email || !password) {
+    res.status(400).json({ error: 'Full name, email, and password are required.' });
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    res.status(400).json({ error: 'A valid email address is required.' });
+    return;
+  }
+
+  if (password.length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    return;
+  }
+
+  const existingMember = db
+    .prepare(`SELECT id FROM users WHERE email = ? AND role = 'member' LIMIT 1`)
+    .get(email) as { id: number } | undefined;
+
+  if (existingMember) {
+    res.status(409).json({ error: 'An account with this email already exists.' });
+    return;
+  }
+
+  const passwordHash = bcrypt.hashSync(password, 10);
+
+  db.prepare(
+    `INSERT INTO users (full_name, email, phone, city, password_hash, role, status)
+     VALUES (?, ?, ?, ?, ?, 'member', 'pending')`
+  ).run(fullName, email, phone || null, city || null, passwordHash);
+
+  res.status(201).json({
+    message: 'Registration received and awaiting admin approval.',
+  });
 });
 
-app.post('/api/members/login', (_req: Request<unknown, unknown, { email?: string; password?: string }>, res: Response) => {
-  res.status(403).json({ error: 'Member login is disabled. Contact the administrator.' });
+app.post('/api/members/login', (req: Request<unknown, unknown, { email?: string; password?: string }>, res: Response) => {
+  const email = req.body.email?.trim().toLowerCase() || '';
+  const password = req.body.password?.trim() || '';
+
+  if (!email || !password) {
+    res.status(400).json({ error: 'Email and password are required.' });
+    return;
+  }
+
+  const member = db
+    .prepare(
+      `SELECT id,
+              full_name as fullName,
+              email,
+              password_hash as passwordHash,
+              status
+       FROM users
+       WHERE email = ? AND role = 'member'
+       LIMIT 1`
+    )
+    .get(email) as { id: number; fullName: string; email: string; passwordHash: string; status: string } | undefined;
+
+  if (!member || !bcrypt.compareSync(password, member.passwordHash)) {
+    res.status(401).json({ error: 'Invalid login.' });
+    return;
+  }
+
+  if (member.status === 'pending') {
+    res.status(403).json({ error: 'Your membership is pending admin approval.' });
+    return;
+  }
+
+  if (member.status === 'rejected') {
+    res.status(403).json({ error: 'Your membership request was rejected. Please contact the administrator.' });
+    return;
+  }
+
+  const memberToken = issueMemberToken({
+    userId: member.id,
+    role: 'member',
+    fullName: member.fullName,
+    email: member.email,
+  });
+
+  res.cookie('church_member_session', memberToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
+    member: {
+      id: member.id,
+      fullName: member.fullName,
+      email: member.email,
+      status: member.status,
+    },
+  });
 });
 
 app.post('/api/members/logout', (_req: Request, res: Response) => {
-  res.status(403).json({ error: 'Member login is disabled. Contact the administrator.' });
+  res.clearCookie('church_member_session');
+  res.status(200).json({ ok: true });
 });
 
-app.get('/api/members/session', (_req: Request, res: Response) => {
-  res.status(403).json({ error: 'Member login is disabled. Contact the administrator.' });
+app.get('/api/members/session', requireMember, (_req: Request, res: Response) => {
+  res.status(200).json({
+    member: {
+      id: res.locals.member.userId,
+      fullName: res.locals.member.fullName,
+      email: res.locals.member.email,
+      role: res.locals.member.role,
+    },
+  });
 });
 
 app.get('/api/members/status/:email', (req: Request<{ email: string }>, res: Response) => {

@@ -404,6 +404,7 @@
               <div class="event-time">
                 <strong>${event.eventStartTime || ''}${event.eventEndTime ? ` - ${event.eventEndTime}` : ''}</strong>
               </div>
+              ${event.documentUrl ? `<p><a href="${event.documentUrl}" target="_blank" rel="noreferrer" style="color: #c41e3a; text-decoration: none;">Open Document -></a></p>` : ''}
               ${event.externalLink ? `<p><a href="${event.externalLink}" target="_blank" style="color: #c41e3a; text-decoration: none;">View Details →</a></p>` : ''}
               <div class="card-meta">Category: ${event.category}</div>
             </div>
