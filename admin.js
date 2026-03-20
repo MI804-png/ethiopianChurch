@@ -1436,19 +1436,51 @@ if (resourceForm && resourceFeedback) {
   resourceForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(resourceForm);
+    const selectedType = String(data.get('type') || '');
+    const selectedFile = data.get('document');
+    const selectedUrl = String(data.get('url') || '').trim();
+
+    if (selectedType === 'video' && selectedFile instanceof File && selectedFile.size > 0) {
+      resourceFeedback.textContent = 'Video resources cannot include an uploaded document file.';
+      return;
+    }
+
+    if (selectedType === 'document') {
+      const hasFile = selectedFile instanceof File && selectedFile.size > 0;
+      if (!hasFile && !selectedUrl) {
+        resourceFeedback.textContent = 'For document resources, upload a file or provide a URL.';
+        return;
+      }
+
+      if (hasFile) {
+        const allowedExtensions = ['.pdf', '.doc', '.docx'];
+        const fileName = selectedFile.name.toLowerCase();
+        const hasAllowedExtension = allowedExtensions.some((extension) => fileName.endsWith(extension));
+        if (!hasAllowedExtension) {
+          resourceFeedback.textContent = 'Unsupported file type. Upload PDF, DOC, or DOCX.';
+          return;
+        }
+
+        const maxBytes = 20 * 1024 * 1024;
+        if (selectedFile.size > maxBytes) {
+          resourceFeedback.textContent = 'File is too large. Maximum allowed size is 20MB.';
+          return;
+        }
+      }
+    }
 
     resourceFeedback.textContent = t('adminResourcePublishing');
+    let requestTimeout;
 
     try {
       const controller = new AbortController();
-      const requestTimeout = window.setTimeout(() => controller.abort(), 90000);
+      requestTimeout = window.setTimeout(() => controller.abort(), 300000);
       const response = await fetch('/api/admin/resources', {
         method: 'POST',
         credentials: 'include',
         signal: controller.signal,
         body: data,
       });
-      window.clearTimeout(requestTimeout);
 
       const hasJson = response.headers.get('content-type')?.includes('application/json');
       const payload = hasJson ? await response.json() : null;
@@ -1465,9 +1497,13 @@ if (resourceForm && resourceFeedback) {
       await Promise.all([loadResources(), loadOverview()]);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        resourceFeedback.textContent = 'Resource upload is taking too long. The server may be waking up. Please try once more.';
+        resourceFeedback.textContent = 'Resource upload timed out after 5 minutes. Please check your file size/network and try again.';
       } else {
         resourceFeedback.textContent = error instanceof Error ? error.message : t('adminResourcePublishFailed');
+      }
+    } finally {
+      if (requestTimeout) {
+        window.clearTimeout(requestTimeout);
       }
     }
   });
