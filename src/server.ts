@@ -133,19 +133,32 @@ const usesRenderPersistentPath =
   || process.env.UPLOADS_DIR?.startsWith(renderPersistentRoot)
   || (!process.env.DATA_DIR && !process.env.UPLOADS_DIR && process.platform !== 'win32');
 
-if (process.env.NODE_ENV === 'production' && usesRenderPersistentPath && !hasRenderPersistentDisk) {
-  throw new Error(
-    `[storage] Persistent storage path ${renderPersistentRoot} is not mounted. `
-    + 'Attach a Render persistent disk or use a non-ephemeral external storage/database.'
+const missingRenderPersistentDisk =
+  process.env.NODE_ENV === 'production'
+  && usesRenderPersistentPath
+  && !hasRenderPersistentDisk;
+
+const configuredDataDir = missingRenderPersistentDisk && process.env.DATA_DIR?.startsWith(renderPersistentRoot)
+  ? undefined
+  : process.env.DATA_DIR;
+const configuredUploadsDir = missingRenderPersistentDisk && process.env.UPLOADS_DIR?.startsWith(renderPersistentRoot)
+  ? undefined
+  : process.env.UPLOADS_DIR;
+
+if (missingRenderPersistentDisk) {
+  console.warn(
+    `[storage] Persistent path ${renderPersistentRoot} is not mounted. `
+    + 'Falling back to ephemeral local storage for this boot. '
+    + 'Attach the Render disk to persist data across deploys.'
   );
 }
 
 const dataDir = resolveRuntimePath(
-  process.env.DATA_DIR,
+  configuredDataDir,
   hasRenderPersistentDisk ? renderDataDir : defaultDataDir
 );
 const uploadsDir = resolveRuntimePath(
-  process.env.UPLOADS_DIR,
+  configuredUploadsDir,
   hasRenderPersistentDisk ? renderUploadsDir : defaultUploadsDir
 );
 const eventUploadsDir = path.join(uploadsDir, 'events');
