@@ -1441,7 +1441,7 @@ if (resourceForm && resourceFeedback) {
 
     try {
       const controller = new AbortController();
-      const requestTimeout = window.setTimeout(() => controller.abort(), 20000);
+      const requestTimeout = window.setTimeout(() => controller.abort(), 90000);
       const response = await fetch('/api/admin/resources', {
         method: 'POST',
         credentials: 'include',
@@ -1465,7 +1465,7 @@ if (resourceForm && resourceFeedback) {
       await Promise.all([loadResources(), loadOverview()]);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        resourceFeedback.textContent = 'Resource publish request timed out. Please try again.';
+        resourceFeedback.textContent = 'Resource upload is taking too long. The server may be waking up. Please try once more.';
       } else {
         resourceFeedback.textContent = error instanceof Error ? error.message : t('adminResourcePublishFailed');
       }
