@@ -2,7 +2,7 @@ services:
   - type: web
     name: ethiopian-church-website
     env: node
-    plan: free
+    plan: starter
     region: frankfurt
     buildCommand: npm install
     startCommand: npm start

@@ -128,6 +128,17 @@ const defaultUploadsDir = path.join(projectRoot, 'uploads');
 const renderDataDir = path.join(renderPersistentRoot, 'data');
 const renderUploadsDir = path.join(renderPersistentRoot, 'uploads');
 const hasRenderPersistentDisk = process.platform !== 'win32' && fs.existsSync(renderPersistentRoot);
+const usesRenderPersistentPath =
+  process.env.DATA_DIR?.startsWith(renderPersistentRoot)
+  || process.env.UPLOADS_DIR?.startsWith(renderPersistentRoot)
+  || (!process.env.DATA_DIR && !process.env.UPLOADS_DIR && process.platform !== 'win32');
+
+if (process.env.NODE_ENV === 'production' && usesRenderPersistentPath && !hasRenderPersistentDisk) {
+  throw new Error(
+    `[storage] Persistent storage path ${renderPersistentRoot} is not mounted. `
+    + 'Attach a Render persistent disk or use a non-ephemeral external storage/database.'
+  );
+}
 
 const dataDir = resolveRuntimePath(
   process.env.DATA_DIR,
@@ -533,9 +544,21 @@ const readHomepageContent = (): HomepageContent => {
 
   try {
     const saved = JSON.parse(fs.readFileSync(homepageContentPath, 'utf8')) as Partial<HomepageContent>;
+    const savedIndexHtml = typeof saved.indexHtml === 'string' && saved.indexHtml.trim() ? saved.indexHtml : '';
+    const savedScriptJs = typeof saved.scriptJs === 'string' && saved.scriptJs.trim() ? saved.scriptJs : '';
+
+    // If persisted script has invalid syntax, serve source files so public pages keep working.
+    if (savedScriptJs) {
+      try {
+        new Function(savedScriptJs);
+      } catch {
+        return fallback;
+      }
+    }
+
     return {
-      indexHtml: typeof saved.indexHtml === 'string' && saved.indexHtml.trim() ? saved.indexHtml : fallback.indexHtml,
-      scriptJs: typeof saved.scriptJs === 'string' && saved.scriptJs.trim() ? saved.scriptJs : fallback.scriptJs,
+      indexHtml: savedIndexHtml || fallback.indexHtml,
+      scriptJs: savedScriptJs || fallback.scriptJs,
     };
   } catch {
     return fallback;
