@@ -129,6 +129,10 @@ const smtpPass = process.env.SMTP_PASS?.trim() || '';
 const smtpSecure = process.env.SMTP_SECURE === 'true' || smtpPort === 465;
 const inquiryDestination = process.env.CONTACT_EMAIL_TO?.trim() || '';
 const inquiryFromAddress = process.env.CONTACT_EMAIL_FROM?.trim() || smtpUser || 'no-reply@localhost';
+const parsedResourceUploadMaxMb = Number(process.env.RESOURCE_UPLOAD_MAX_MB || 50);
+const resourceUploadMaxMb = Number.isFinite(parsedResourceUploadMaxMb)
+  ? Math.min(Math.max(parsedResourceUploadMaxMb, 1), 500)
+  : 50;
 const canSendInquiryEmail = Boolean(smtpHost && smtpUser && smtpPass && inquiryDestination);
 const mailTransporter = canSendInquiryEmail
   ? nodemailer.createTransport({
@@ -387,7 +391,7 @@ const resourceStorage = multer.diskStorage({
 const uploadResourceDocument = multer({
   storage: resourceStorage,
   limits: {
-    fileSize: 20 * 1024 * 1024,
+    fileSize: resourceUploadMaxMb * 1024 * 1024,
   },
   fileFilter: (_req, file, callback) => {
     const allowedExtensions = new Set(['.pdf', '.doc', '.docx']);
@@ -1148,7 +1152,7 @@ app.get('/api/admin/member-links', requireAdmin, (_req: Request, res: Response) 
   app.post(
     '/api/admin/access-requests/:id/approve',
     requireAdmin,
-    async (req: Request<{ id: string }, unknown, { notes?: string }>, res: Response) => {
+    (req: Request<{ id: string }, unknown, { notes?: string }>, res: Response) => {
       const id = Number(req.params.id);
       const notes = req.body.notes?.trim() || '';
 
@@ -1194,7 +1198,13 @@ app.get('/api/admin/member-links', requireAdmin, (_req: Request, res: Response) 
         details: `email=${request.email};userId=${result.lastInsertRowid}`,
       });
 
-      // Requester notification is best-effort and should not block approval.
+      res.json({
+        message: 'Access request approved. New member account created.',
+        userId: result.lastInsertRowid,
+        email: request.email,
+      });
+
+      // Requester notification is best-effort and should never block approval response.
       if (mailTransporter) {
         const approvalText = [
           `Hello ${request.full_name},`,
@@ -1204,60 +1214,54 @@ app.get('/api/admin/member-links', requireAdmin, (_req: Request, res: Response) 
           notes ? `Admin note: ${notes}` : '',
         ].filter(Boolean).join('\n');
 
-        try {
-          const decisionEmailTimeoutMs = 15_000;
-          await Promise.race([
-            mailTransporter.sendMail({
-              from: inquiryFromAddress,
-              to: request.email,
-              subject: 'Community Access Request Approved',
-              text: approvalText,
-            }),
-            new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Approval notification email timed out.')), decisionEmailTimeoutMs);
-            }),
-          ]);
-
-          writeActivityLog({
-            eventType: 'access_request_approve_email_sent',
-            method: 'POST',
-            path: `/api/admin/access-requests/${id}/approve`,
-            statusCode: 200,
-            actorRole: 'admin',
-            actorId: res.locals.admin.userId,
-            actorName: res.locals.admin.username,
-            ipAddress: getClientIp(req) || '',
-            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-            details: `email=${request.email}`,
+        const decisionEmailTimeoutMs = 15_000;
+        void Promise.race([
+          mailTransporter.sendMail({
+            from: inquiryFromAddress,
+            to: request.email,
+            subject: 'Community Access Request Approved',
+            text: approvalText,
+          }),
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Approval notification email timed out.')), decisionEmailTimeoutMs);
+          }),
+        ])
+          .then(() => {
+            writeActivityLog({
+              eventType: 'access_request_approve_email_sent',
+              method: 'POST',
+              path: `/api/admin/access-requests/${id}/approve`,
+              statusCode: 200,
+              actorRole: 'admin',
+              actorId: res.locals.admin.userId,
+              actorName: res.locals.admin.username,
+              ipAddress: getClientIp(req) || '',
+              userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+              details: `email=${request.email}`,
+            });
+          })
+          .catch((error: unknown) => {
+            writeActivityLog({
+              eventType: 'access_request_approve_email_failed',
+              method: 'POST',
+              path: `/api/admin/access-requests/${id}/approve`,
+              statusCode: 200,
+              actorRole: 'admin',
+              actorId: res.locals.admin.userId,
+              actorName: res.locals.admin.username,
+              ipAddress: getClientIp(req) || '',
+              userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+              details: `email=${request.email};reason=${error instanceof Error ? error.message : 'unknown'}`,
+            });
           });
-        } catch (error) {
-          writeActivityLog({
-            eventType: 'access_request_approve_email_failed',
-            method: 'POST',
-            path: `/api/admin/access-requests/${id}/approve`,
-            statusCode: 200,
-            actorRole: 'admin',
-            actorId: res.locals.admin.userId,
-            actorName: res.locals.admin.username,
-            ipAddress: getClientIp(req) || '',
-            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-            details: `email=${request.email};reason=${error instanceof Error ? error.message : 'unknown'}`,
-          });
-        }
       }
-
-      res.json({
-        message: 'Access request approved. New member account created.',
-        userId: result.lastInsertRowid,
-        email: request.email,
-      });
     }
   );
 
   app.post(
     '/api/admin/access-requests/:id/reject',
     requireAdmin,
-    async (req: Request<{ id: string }, unknown, { notes?: string }>, res: Response) => {
+    (req: Request<{ id: string }, unknown, { notes?: string }>, res: Response) => {
       const id = Number(req.params.id);
       const notes = req.body.notes?.trim() || '';
 
@@ -1295,7 +1299,9 @@ app.get('/api/admin/member-links', requireAdmin, (_req: Request, res: Response) 
         details: `email=${request.email}`,
       });
 
-      // Requester notification is best-effort and should not block rejection.
+      res.json({ message: 'Access request rejected.' });
+
+      // Requester notification is best-effort and should never block rejection response.
       if (mailTransporter) {
         const rejectionText = [
           `Hello ${request.full_name},`,
@@ -1304,49 +1310,47 @@ app.get('/api/admin/member-links', requireAdmin, (_req: Request, res: Response) 
           notes ? `Admin note: ${notes}` : '',
         ].filter(Boolean).join('\n');
 
-        try {
-          const decisionEmailTimeoutMs = 15_000;
-          await Promise.race([
-            mailTransporter.sendMail({
-              from: inquiryFromAddress,
-              to: request.email,
-              subject: 'Community Access Request Update',
-              text: rejectionText,
-            }),
-            new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Rejection notification email timed out.')), decisionEmailTimeoutMs);
-            }),
-          ]);
-
-          writeActivityLog({
-            eventType: 'access_request_reject_email_sent',
-            method: 'POST',
-            path: `/api/admin/access-requests/${id}/reject`,
-            statusCode: 200,
-            actorRole: 'admin',
-            actorId: res.locals.admin.userId,
-            actorName: res.locals.admin.username,
-            ipAddress: getClientIp(req) || '',
-            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-            details: `email=${request.email}`,
+        const decisionEmailTimeoutMs = 15_000;
+        void Promise.race([
+          mailTransporter.sendMail({
+            from: inquiryFromAddress,
+            to: request.email,
+            subject: 'Community Access Request Update',
+            text: rejectionText,
+          }),
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Rejection notification email timed out.')), decisionEmailTimeoutMs);
+          }),
+        ])
+          .then(() => {
+            writeActivityLog({
+              eventType: 'access_request_reject_email_sent',
+              method: 'POST',
+              path: `/api/admin/access-requests/${id}/reject`,
+              statusCode: 200,
+              actorRole: 'admin',
+              actorId: res.locals.admin.userId,
+              actorName: res.locals.admin.username,
+              ipAddress: getClientIp(req) || '',
+              userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+              details: `email=${request.email}`,
+            });
+          })
+          .catch((error: unknown) => {
+            writeActivityLog({
+              eventType: 'access_request_reject_email_failed',
+              method: 'POST',
+              path: `/api/admin/access-requests/${id}/reject`,
+              statusCode: 200,
+              actorRole: 'admin',
+              actorId: res.locals.admin.userId,
+              actorName: res.locals.admin.username,
+              ipAddress: getClientIp(req) || '',
+              userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+              details: `email=${request.email};reason=${error instanceof Error ? error.message : 'unknown'}`,
+            });
           });
-        } catch (error) {
-          writeActivityLog({
-            eventType: 'access_request_reject_email_failed',
-            method: 'POST',
-            path: `/api/admin/access-requests/${id}/reject`,
-            statusCode: 200,
-            actorRole: 'admin',
-            actorId: res.locals.admin.userId,
-            actorName: res.locals.admin.username,
-            ipAddress: getClientIp(req) || '',
-            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
-            details: `email=${request.email};reason=${error instanceof Error ? error.message : 'unknown'}`,
-          });
-        }
       }
-
-      res.json({ message: 'Access request rejected.' });
     }
   );
 

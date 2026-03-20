@@ -1249,15 +1249,9 @@ async function loadRegistrations() {
 
     accessRequestsList.querySelectorAll('.admin-access-request-approve').forEach((button) => {
       button.addEventListener('click', async () => {
-        const notes = prompt('Add optional notes about this approval:');
-        if (notes === null) {
-          return;
-        }
-
         try {
           await api(`/api/admin/access-requests/${button.dataset.id}/approve`, {
             method: 'POST',
-            body: JSON.stringify({ notes }),
           });
           loginFeedback.textContent = 'Access request approved. New member account created.';
           loginFeedback.style.color = '#0a7e4f';
@@ -1276,15 +1270,9 @@ async function loadRegistrations() {
           return;
         }
 
-        const notes = prompt('Add optional notes about this rejection:');
-        if (notes === null) {
-          return;
-        }
-
         try {
           await api(`/api/admin/access-requests/${button.dataset.id}/reject`, {
             method: 'POST',
-            body: JSON.stringify({ notes }),
           });
           loginFeedback.textContent = 'Access request rejected.';
           loginFeedback.style.color = '#0a7e4f';
