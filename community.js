@@ -94,16 +94,22 @@ async function loadDashboardContent() {
   const events = Array.isArray(data.events) ? data.events : [];
   const gallery = Array.isArray(data.gallery) ? data.gallery : [];
 
-  resourceList.innerHTML = resources.map((resource) => `
+  resourceList.innerHTML = resources.map((resource) => {
+    const fileName = resource.url ? resource.url.split('/').pop() : '';
+    const label = resource.type === 'video' ? 'Watch video' : (fileName ? escapeHtml(decodeURIComponent(fileName).replace(/^\d+-[a-f0-9]+-/, '')) : 'Open document');
+    const embed = resource.type === 'video' && resource.url
+      ? `<p><a href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer">${label}</a></p>`
+      : `<p><a href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer">&#128196; ${label}</a></p>`;
+    return `
     <article class="admin-item">
       <div>
         <p class="section-tag">${escapeHtml(resource.type)}</p>
         <h3>${escapeHtml(resource.title)}</h3>
         <p>${escapeHtml(resource.description || '')}</p>
-        <p><a href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer">Open resource</a></p>
+        ${embed}
       </div>
-    </article>
-  `).join('') || '<p class="empty-state">No resources have been posted yet.</p>';
+    </article>`;
+  }).join('') || '<p class="empty-state">No resources have been posted yet.</p>';
 
   prayerList.innerHTML = prayers.map((prayer) => `
     <article class="admin-item">
@@ -124,7 +130,7 @@ async function loadDashboardContent() {
         <p><strong>Date:</strong> ${escapeHtml(event.eventDate)} | <strong>Time:</strong> ${escapeHtml(event.eventStartTime)} - ${escapeHtml(event.eventEndTime || 'N/A')}</p>
         <p><strong>Location:</strong> ${escapeHtml(event.location || 'Not specified')}</p>
         <p>${escapeHtml(event.details || '')}</p>
-        ${event.documentUrl ? `<p><a href="${escapeHtml(event.documentUrl)}" target="_blank" rel="noreferrer">Open event document</a></p>` : ''}
+        ${event.documentUrl ? `<p><a href="${escapeHtml(event.documentUrl)}" target="_blank" rel="noreferrer">&#128196; Open event document</a></p>` : ''}
         ${event.externalLink ? `<p><a href="${escapeHtml(event.externalLink)}" target="_blank" rel="noreferrer">Open event link</a></p>` : ''}
       </div>
     </article>
@@ -136,7 +142,9 @@ async function loadDashboardContent() {
         <p class="section-tag">${escapeHtml(item.mediaType)}</p>
         <h3>${escapeHtml(item.title)}</h3>
         <p>${escapeHtml(item.caption || '')}</p>
-        <p><a href="${escapeHtml(item.mediaUrl)}" target="_blank" rel="noreferrer">Open media</a></p>
+        ${item.mediaType === 'video'
+          ? `<video controls preload="metadata" style="max-width: 100%; border-radius: 0.8rem; background: #000;"><source src="${escapeHtml(item.mediaUrl)}"></video>`
+          : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.title)}" style="max-width: 100%; border-radius: 0.8rem;">`}
       </div>
     </article>
   `).join('') || '<p class="empty-state">No gallery media available yet.</p>';
