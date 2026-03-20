@@ -1621,6 +1621,78 @@ app.get('/api/community/resources', requireMember, (_req: Request, res: Response
   res.json(resources);
 });
 
+app.get('/api/community/dashboard', requireMember, (_req: Request, res: Response) => {
+  const resources = db
+    .prepare(
+      `SELECT id,
+              title,
+              type,
+              url,
+              description,
+              created_at as createdAt
+       FROM community_resources
+       ORDER BY created_at DESC`
+    )
+    .all();
+
+  const prayers = db
+    .prepare(
+      `SELECT id,
+              title,
+              category,
+              scheduled_for as scheduledFor,
+              content,
+              updated_at as updatedAt
+       FROM prayers
+       WHERE deleted_at IS NULL
+       ORDER BY id DESC`
+    )
+    .all();
+
+  const events = db
+    .prepare(
+      `SELECT id,
+              title,
+              category,
+              event_date as eventDate,
+              event_time as eventStartTime,
+              event_end_time as eventEndTime,
+              location,
+              details,
+              document_url as documentUrl,
+              document_name as documentName,
+              external_link as externalLink,
+              created_at as createdAt,
+              updated_at as updatedAt
+       FROM events
+       WHERE is_published = 1
+       ORDER BY event_date ASC, event_time ASC, id DESC`
+    )
+    .all();
+
+  const gallery = db
+    .prepare(
+      `SELECT id,
+              title,
+              caption,
+              media_type as mediaType,
+              media_url as mediaUrl,
+              original_name as originalName,
+              created_at as createdAt,
+              updated_at as updatedAt
+       FROM gallery_media
+       ORDER BY created_at DESC, id DESC`
+    )
+    .all();
+
+  res.json({
+    resources,
+    prayers,
+    events,
+    gallery,
+  });
+});
+
 app.post('/api/public/community/access', (req: Request<unknown, unknown, { email?: string }>, res: Response) => {
   const email = req.body.email?.trim().toLowerCase();
 

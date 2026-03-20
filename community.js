@@ -4,6 +4,9 @@ const dashboard = document.querySelector('#community-dashboard');
 const memberLabel = document.querySelector('#community-member');
 const logoutButton = document.querySelector('#community-logout');
 const resourceList = document.querySelector('#community-resource-list');
+const prayerList = document.querySelector('#community-prayer-list');
+const eventList = document.querySelector('#community-event-list');
+const galleryList = document.querySelector('#community-gallery-list');
 const accessForm = document.querySelector('#community-access-form');
 const accessEmail = document.querySelector('#access-email');
 
@@ -84,8 +87,13 @@ async function requestAccessByEmail(email) {
     accessEmail.focus();
   }
 
-async function loadResources() {
-  const resources = await api('/api/community/resources');
+async function loadDashboardContent() {
+  const data = await api('/api/community/dashboard');
+  const resources = Array.isArray(data.resources) ? data.resources : [];
+  const prayers = Array.isArray(data.prayers) ? data.prayers : [];
+  const events = Array.isArray(data.events) ? data.events : [];
+  const gallery = Array.isArray(data.gallery) ? data.gallery : [];
+
   resourceList.innerHTML = resources.map((resource) => `
     <article class="admin-item">
       <div>
@@ -96,6 +104,42 @@ async function loadResources() {
       </div>
     </article>
   `).join('') || '<p class="empty-state">No resources have been posted yet.</p>';
+
+  prayerList.innerHTML = prayers.map((prayer) => `
+    <article class="admin-item">
+      <div>
+        <p class="section-tag">${escapeHtml(prayer.category)}</p>
+        <h3>${escapeHtml(prayer.title)}</h3>
+        <p><strong>Schedule:</strong> ${escapeHtml(prayer.scheduledFor)}</p>
+        <p>${escapeHtml(prayer.content)}</p>
+      </div>
+    </article>
+  `).join('') || '<p class="empty-state">No prayers available yet.</p>';
+
+  eventList.innerHTML = events.map((event) => `
+    <article class="admin-item">
+      <div>
+        <p class="section-tag">${escapeHtml(event.category)}</p>
+        <h3>${escapeHtml(event.title)}</h3>
+        <p><strong>Date:</strong> ${escapeHtml(event.eventDate)} | <strong>Time:</strong> ${escapeHtml(event.eventStartTime)} - ${escapeHtml(event.eventEndTime || 'N/A')}</p>
+        <p><strong>Location:</strong> ${escapeHtml(event.location || 'Not specified')}</p>
+        <p>${escapeHtml(event.details || '')}</p>
+        ${event.documentUrl ? `<p><a href="${escapeHtml(event.documentUrl)}" target="_blank" rel="noreferrer">Open event document</a></p>` : ''}
+        ${event.externalLink ? `<p><a href="${escapeHtml(event.externalLink)}" target="_blank" rel="noreferrer">Open event link</a></p>` : ''}
+      </div>
+    </article>
+  `).join('') || '<p class="empty-state">No events published yet.</p>';
+
+  galleryList.innerHTML = gallery.map((item) => `
+    <article class="admin-item">
+      <div>
+        <p class="section-tag">${escapeHtml(item.mediaType)}</p>
+        <h3>${escapeHtml(item.title)}</h3>
+        <p>${escapeHtml(item.caption || '')}</p>
+        <p><a href="${escapeHtml(item.mediaUrl)}" target="_blank" rel="noreferrer">Open media</a></p>
+      </div>
+    </article>
+  `).join('') || '<p class="empty-state">No gallery media available yet.</p>';
 }
 
 async function init() {
@@ -106,7 +150,7 @@ async function init() {
     dashboard.hidden = false;
     memberLabel.textContent = `${session.member.fullName}`;
 
-    await loadResources();
+    await loadDashboardContent();
   } catch (error) {
     gate.hidden = false;
     dashboard.hidden = true;
@@ -137,7 +181,7 @@ if (accessForm) {
       // Load session and resources
       const session = await api('/api/community/session');
       memberLabel.textContent = `${session.member.fullName}`;
-      await loadResources();
+      await loadDashboardContent();
     } catch (error) {
       gateFeedback.textContent = error instanceof Error ? error.message : 'Access denied.';
       gateFeedback.style.color = '#c41e3a';
