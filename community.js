@@ -136,18 +136,21 @@ async function loadDashboardContent() {
     </article>
   `).join('') || '<p class="empty-state">No events published yet.</p>';
 
-  galleryList.innerHTML = gallery.map((item) => `
-    <article class="admin-item">
-      <div>
-        <p class="section-tag">${escapeHtml(item.mediaType)}</p>
-        <h3>${escapeHtml(item.title)}</h3>
-        <p>${escapeHtml(item.caption || '')}</p>
-        ${item.mediaType === 'video'
-          ? `<video controls preload="metadata" style="max-width: 100%; border-radius: 0.8rem; background: #000;"><source src="${escapeHtml(item.mediaUrl)}"></video>`
-          : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.title)}" style="max-width: 100%; border-radius: 0.8rem;">`}
-      </div>
-    </article>
-  `).join('') || '<p class="empty-state">No gallery media available yet.</p>';
+  galleryList.innerHTML = gallery.map((item) => {
+    const media = item.mediaType === 'video'
+      ? `<video controls preload="metadata" style="width: 100%; border-radius: 0.9rem; background: #000; display: block;"><source src="${escapeHtml(item.mediaUrl)}"></video>`
+      : `<img src="${escapeHtml(item.mediaUrl)}" alt="${escapeHtml(item.title)}" loading="lazy" style="width: 100%; height: auto; min-height: 12rem; object-fit: cover; border-radius: 0.9rem; display: block; background: #f0ece5;">`;
+    const caption = item.caption
+      ? `<br><span style="color: var(--muted);">${escapeHtml(item.caption)}</span>`
+      : '';
+    return `
+    <figure style="margin: 0; overflow: hidden; border-radius: 0.9rem; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow);">
+      ${media}
+      <figcaption style="padding: 0.85rem 1rem 0.9rem; font-size: 0.95rem;">
+        <strong>${escapeHtml(item.title)}</strong>${caption}
+      </figcaption>
+    </figure>`;
+  }).join('') || '<p class="empty-state">No gallery media available yet.</p>';
 }
 
 async function init() {
