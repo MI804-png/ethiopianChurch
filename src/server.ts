@@ -503,7 +503,12 @@ app.get('/community.js', sendRootFile('community.js'));
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ ok: true });
 });
-app.get('/login', sendRootFile('login.html'));
+
+// Redirect old login page to community portal
+app.get('/login', (_req: Request, res: Response) => {
+  res.redirect(302, '/community');
+});
+
 app.get('/members-dashboard', sendRootFile('members-dashboard.html'));
 
 const issueAdminToken = (payload: JwtPayload) =>
@@ -1901,109 +1906,14 @@ app.delete('/api/admin/registrations/:id', requireAdmin, (req: Request<{ id: str
   res.json({ message: 'Registration deleted.' });
 });
 
-// Member Authentication Routes
-app.post('/api/members/register', (req: Request<unknown, unknown, { fullName?: string; email?: string; phone?: string; city?: string; password?: string }>, res: Response) => {
-  const fullName = req.body.fullName?.trim() || '';
-  const email = req.body.email?.trim().toLowerCase() || '';
-  const phone = req.body.phone?.trim() || '';
-  const city = req.body.city?.trim() || '';
-  const password = req.body.password?.trim() || '';
-
-  if (!fullName || !email || !password) {
-    res.status(400).json({ error: 'Full name, email, and password are required.' });
-    return;
-  }
-
-  if (!isValidEmail(email)) {
-    res.status(400).json({ error: 'A valid email address is required.' });
-    return;
-  }
-
-  if (password.length < 8) {
-    res.status(400).json({ error: 'Password must be at least 8 characters.' });
-    return;
-  }
-
-  const existingMember = db
-    .prepare(`SELECT id FROM users WHERE email = ? AND role = 'member' LIMIT 1`)
-    .get(email) as { id: number } | undefined;
-
-  if (existingMember) {
-    res.status(409).json({ error: 'An account with this email already exists.' });
-    return;
-  }
-
-  const passwordHash = bcrypt.hashSync(password, 10);
-
-  db.prepare(
-    `INSERT INTO users (full_name, email, phone, city, password_hash, role, status)
-     VALUES (?, ?, ?, ?, ?, 'member', 'pending')`
-  ).run(fullName, email, phone || null, city || null, passwordHash);
-
-  res.status(201).json({
-    message: 'Registration received and awaiting admin approval.',
-  });
+// Member access is now through email-based portal only
+// Old member login/register routes are disabled
+app.post('/api/members/register', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'Member registration is disabled. Please use the email-based access at /community.' });
 });
 
-app.post('/api/members/login', (req: Request<unknown, unknown, { email?: string; password?: string }>, res: Response) => {
-  const email = req.body.email?.trim().toLowerCase() || '';
-  const password = req.body.password?.trim() || '';
-
-  if (!email || !password) {
-    res.status(400).json({ error: 'Email and password are required.' });
-    return;
-  }
-
-  const member = db
-    .prepare(
-      `SELECT id,
-              full_name as fullName,
-              email,
-              password_hash as passwordHash,
-              status
-       FROM users
-       WHERE email = ? AND role = 'member'
-       LIMIT 1`
-    )
-    .get(email) as { id: number; fullName: string; email: string; passwordHash: string; status: string } | undefined;
-
-  if (!member || !bcrypt.compareSync(password, member.passwordHash)) {
-    res.status(401).json({ error: 'Invalid login.' });
-    return;
-  }
-
-  if (member.status === 'pending') {
-    res.status(403).json({ error: 'Your membership is pending admin approval.' });
-    return;
-  }
-
-  if (member.status === 'rejected') {
-    res.status(403).json({ error: 'Your membership request was rejected. Please contact the administrator.' });
-    return;
-  }
-
-  const memberToken = issueMemberToken({
-    userId: member.id,
-    role: 'member',
-    fullName: member.fullName,
-    email: member.email,
-  });
-
-  res.cookie('church_member_session', memberToken, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
-    maxAge: 14 * 24 * 60 * 60 * 1000,
-  });
-
-  res.status(200).json({
-    member: {
-      id: member.id,
-      fullName: member.fullName,
-      email: member.email,
-      status: member.status,
-    },
-  });
+app.post('/api/members/login', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'Member login is disabled. Please use the email-based access at /community.' });
 });
 
 app.post('/api/members/logout', (_req: Request, res: Response) => {
@@ -2022,97 +1932,16 @@ app.get('/api/members/session', requireMember, (_req: Request, res: Response) =>
   });
 });
 
-app.get('/api/members/status/:email', (req: Request<{ email: string }>, res: Response) => {
-  const email = req.params.email?.trim().toLowerCase();
-
-  if (!email) {
-    res.status(400).json({ error: 'Email is required.' });
-    return;
-  }
-
-  const member = db
-    .prepare(
-      `SELECT id, status, email FROM users
-       WHERE email = ? AND role = 'member'
-       LIMIT 1`
-    )
-    .get(email) as { id: number; status: string; email: string } | undefined;
-
-  if (!member) {
-    res.status(404).json({ error: 'No registration found for this email.' });
-    return;
-  }
-
-  res.json({ email: member.email, status: member.status });
+app.get('/api/members/status/:email', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'This endpoint is no longer available. Please use /community for member access.' });
 });
 
-app.post('/api/members/forgot-password', (req: Request<unknown, unknown, { email?: string }>, res: Response) => {
-  const email = req.body.email?.trim().toLowerCase();
-
-  if (!email) {
-    res.status(400).json({ error: 'Email is required.' });
-    return;
-  }
-
-  const member = db
-    .prepare(`SELECT id FROM users WHERE email = ? AND role = 'member'`)
-    .get(email) as { id: number } | undefined;
-
-  if (!member) {
-    // Don't reveal if email exists (security best practice)
-    res.json({ message: 'If the email exists, a reset link will be sent shortly.' });
-    return;
-  }
-
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + 1); // Valid for 1 hour
-
-  db.prepare(
-    `UPDATE users
-     SET password_reset_token = ?, password_reset_expires = ?
-     WHERE id = ?`
-  ).run(resetToken, expiresAt.toISOString(), member.id);
-
-  // In production, send email with reset link
-  const resetUrl = `${req.protocol}://${req.get('host')}/login?reset_token=${resetToken}`;
-  console.log(`Password reset link for ${email}: ${resetUrl}`);
-
-  res.json({ message: 'If the email exists, a reset link will be sent shortly.' });
+app.post('/api/members/forgot-password', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'Password reset is disabled. Please use the email-based access at /community.' });
 });
 
-app.post('/api/members/reset-password', (req: Request<unknown, unknown, { token?: string; password?: string }>, res: Response) => {
-  const resetToken = req.body.token?.trim();
-  const password = req.body.password?.trim();
-
-  if (!resetToken || !password || password.length < 8) {
-    res.status(400).json({ error: 'Valid reset token and password (min 8 characters) are required.' });
-    return;
-  }
-
-  const member = db
-    .prepare(
-      `SELECT id FROM users
-       WHERE password_reset_token = ?
-       AND password_reset_expires > datetime('now')
-       AND role = 'member'`
-    )
-    .get(resetToken) as { id: number } | undefined;
-
-  if (!member) {
-    res.status(401).json({ error: 'Invalid or expired reset link.' });
-    return;
-  }
-
-  const passwordHash = bcrypt.hashSync(password, 10);
-
-  db.prepare(
-    `UPDATE users
-     SET password_hash = ?, password_reset_token = NULL, password_reset_expires = NULL
-     WHERE id = ?`
-  ).run(passwordHash, member.id);
-
-  res.json({ message: 'Password reset successfully. You can now login.' });
+app.post('/api/members/reset-password', (_req: Request, res: Response) => {
+  res.status(403).json({ error: 'Password reset is disabled. Please use the email-based access at /community.' });
 });
 
 app.get('/api/admin/logs', requireAdmin, (req: Request<unknown, unknown, unknown, { limit?: string }>, res: Response) => {
