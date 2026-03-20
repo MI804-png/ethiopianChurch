@@ -1440,11 +1440,15 @@ if (resourceForm && resourceFeedback) {
     resourceFeedback.textContent = t('adminResourcePublishing');
 
     try {
+      const controller = new AbortController();
+      const requestTimeout = window.setTimeout(() => controller.abort(), 20000);
       const response = await fetch('/api/admin/resources', {
         method: 'POST',
         credentials: 'include',
+        signal: controller.signal,
         body: data,
       });
+      window.clearTimeout(requestTimeout);
 
       const hasJson = response.headers.get('content-type')?.includes('application/json');
       const payload = hasJson ? await response.json() : null;
@@ -1460,7 +1464,11 @@ if (resourceForm && resourceFeedback) {
       resourceForm.reset();
       await Promise.all([loadResources(), loadOverview()]);
     } catch (error) {
-      resourceFeedback.textContent = error instanceof Error ? error.message : t('adminResourcePublishFailed');
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        resourceFeedback.textContent = 'Resource publish request timed out. Please try again.';
+      } else {
+        resourceFeedback.textContent = error instanceof Error ? error.message : t('adminResourcePublishFailed');
+      }
     }
   });
 }
