@@ -8,6 +8,11 @@ const prayerList = document.querySelector('#prayer-list');
 const prayerEmpty = document.querySelector('#prayer-empty');
 const eventList = document.querySelector('#event-list');
 const eventEmpty = document.querySelector('#event-empty');
+const heroLatestPrayer = document.querySelector('#hero-latest-prayer');
+const heroLatestEvent = document.querySelector('#hero-latest-event');
+const heroLatestResource = document.querySelector('#hero-latest-resource');
+const resourceList = document.querySelector('#resource-list');
+const resourceEmpty = document.querySelector('#resource-empty');
 const galleryList = document.querySelector('#gallery-list');
 const galleryEmpty = document.querySelector('#gallery-empty');
 const languageSelect = document.querySelector('#language-select');
@@ -22,6 +27,7 @@ const translations = {
     navIdentity: 'Identity',
     navWorship: 'Worship',
     navPrayers: 'Prayers',
+    navResources: 'Resources',
     navCommunity: 'Community',
     navMinistries: 'Ministries',
     ministriesTag: 'Sacraments and ministries',
@@ -47,6 +53,12 @@ const translations = {
     heroAddressBtn: 'View Official Address',
     heroPrayerBtn: 'Prayer Board',
     heroExploreBtn: 'Explore Church Life',
+    heroLatestPrayerLabel: 'Latest prayer',
+    heroLatestPrayerEmpty: 'No prayer yet',
+    heroLatestEventLabel: 'Latest event',
+    heroLatestEventEmpty: 'No event yet',
+    heroLatestResourceLabel: 'Latest resource',
+    heroLatestResourceEmpty: 'No resource yet',
     aboutTag: 'About the parish',
     aboutTitle: 'A church home rooted in prayer, sacramental life, and service',
     aboutIntro1: 'The Budapest Medhane Alem Church serves Ethiopian Orthodox faithful and all visitors seeking worship, spiritual guidance, and community life in Budapest. The site is designed to present the church clearly and professionally for public reference and institutional verification.',
@@ -80,9 +92,17 @@ const translations = {
     eventsTitle: 'Upcoming events published by the administrator',
     eventsDesc: 'The church administrator can publish event time, date, location, supporting documents, and other details here.',
     eventsEmpty: 'No events have been published yet.',
+    resourcesTag: 'Documents and resources',
+    resourcesTitle: 'Published church documents and community resources',
+    resourcesDesc: 'Official documents and shared resources are available here on the main page.',
+    resourcesEmpty: 'No resources have been published yet.',
     eventLocationLabel: 'Location',
     eventOpenDocument: 'Open document',
     eventOpenLink: 'Open link',
+    resourceTypeDocument: 'Document',
+    resourceTypeVideo: 'Video',
+    resourceOpen: 'Open resource',
+    loadResourcesFailed: 'Unable to load resources.',
     communityTag: 'Community registration',
     communityTitle: 'Register for the church community',
     communityIntro: 'Visitors and community members can request registration here. Requests stay pending until the administrator reviews and accepts them.',
@@ -705,6 +725,73 @@ function renderGalleryCard(item) {
   `;
 }
 
+function renderResourceCard(resource) {
+  const resourceTypeKey = resource.type === 'video' ? 'resourceTypeVideo' : 'resourceTypeDocument';
+
+  return `
+    <article class="prayer-card reveal is-visible">
+      <div class="prayer-card__top">
+        <span class="info-card__label">${escapeHtml(t(resourceTypeKey))}</span>
+      </div>
+      <h3>${escapeHtml(resource.title || '')}</h3>
+      ${resource.description ? `<p>${escapeHtml(resource.description)}</p>` : ''}
+      <div class="share-actions">
+        <a class="share-link" href="${escapeHtml(resource.url || '#')}" target="_blank" rel="noreferrer">${escapeHtml(t('resourceOpen'))}</a>
+      </div>
+    </article>
+  `;
+}
+
+function summarizeText(value, maxLength) {
+  const text = String(value || '').trim();
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength - 1)}...`;
+}
+
+async function loadHeroHighlights() {
+  if (!heroLatestPrayer || !heroLatestEvent || !heroLatestResource) {
+    return;
+  }
+
+  heroLatestPrayer.textContent = t('heroLatestPrayerEmpty');
+  heroLatestEvent.textContent = t('heroLatestEventEmpty');
+  heroLatestResource.textContent = t('heroLatestResourceEmpty');
+
+  try {
+    const [prayerResponse, eventResponse, resourceResponse] = await Promise.all([
+      fetch('/api/public/prayers'),
+      fetch('/api/public/events'),
+      fetch('/api/public/community/resources'),
+    ]);
+
+    if (prayerResponse.ok) {
+      const prayerData = await prayerResponse.json();
+      const prayers = Array.isArray(prayerData.prayers) ? prayerData.prayers : [];
+      if (prayers.length > 0) {
+        heroLatestPrayer.textContent = summarizeText(localizePrayerField(prayers[0].title), 48);
+      }
+    }
+
+    if (eventResponse.ok) {
+      const events = await eventResponse.json();
+      if (Array.isArray(events) && events.length > 0) {
+        heroLatestEvent.textContent = summarizeText(events[0].title, 48);
+      }
+    }
+
+    if (resourceResponse.ok) {
+      const resources = await resourceResponse.json();
+      if (Array.isArray(resources) && resources.length > 0) {
+        heroLatestResource.textContent = summarizeText(resources[0].title, 48);
+      }
+    }
+  } catch {
+    return;
+  }
+}
+
 async function loadGallery() {
   if (!galleryList || !galleryEmpty) {
     return;
@@ -773,6 +860,26 @@ async function loadEvents() {
   }
 }
 
+async function loadResources() {
+  if (!resourceList || !resourceEmpty) {
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/public/community/resources');
+    if (!response.ok) {
+      throw new Error(t('loadResourcesFailed'));
+    }
+
+    const resources = await response.json();
+    resourceList.innerHTML = resources.map(renderResourceCard).join('');
+    resourceEmpty.hidden = resources.length > 0;
+  } catch (error) {
+    resourceEmpty.hidden = false;
+    resourceEmpty.textContent = error instanceof Error ? error.message : t('resourcesEmpty');
+  }
+}
+
 async function trackVisit() {
   const storageKey = `visit-tracked:${window.location.pathname}`;
   if (sessionStorage.getItem(storageKey)) {
@@ -806,8 +913,10 @@ if (languageSelect) {
     currentLanguage = languageSelect.value;
     localStorage.setItem('site-language', currentLanguage);
     applyTranslations();
+    loadHeroHighlights();
     loadPrayers();
     loadEvents();
+    loadResources();
     loadGallery();
   });
 }
@@ -815,6 +924,8 @@ if (languageSelect) {
 applyTranslations();
 
 trackVisit();
+loadHeroHighlights();
 loadPrayers();
 loadEvents();
+loadResources();
 loadGallery();

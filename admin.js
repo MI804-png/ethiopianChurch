@@ -39,6 +39,14 @@ const adminTranslations = {
     adminInquiryDelete: 'Delete',
     adminInquiryDeleteConfirm: 'Delete this inquiry?',
     adminInquiryDeleteFailed: 'Delete failed.',
+    adminInquiryStatus: 'Status',
+    adminInquiryPending: 'Pending',
+    adminInquiryApproved: 'Approved',
+    adminInquiryRejected: 'Rejected',
+    adminInquiryMarkPending: 'Mark pending',
+    adminInquiryApprove: 'Approve',
+    adminInquiryReject: 'Reject',
+    adminInquiryUpdateFailed: 'Status update failed.',
     adminInquiryEmpty: 'No inquiries received yet.',
     // Prayer management
     adminPrayerTag: 'Prayer management',
@@ -262,6 +270,14 @@ const adminTranslations = {
     adminInquiryDelete: 'Törlés',
     adminInquiryDeleteConfirm: 'Törli ezt a megkeresést?',
     adminInquiryDeleteFailed: 'Törlés sikertelen.',
+    adminInquiryStatus: 'Állapot',
+    adminInquiryPending: 'Függőben',
+    adminInquiryApproved: 'Jóváhagyva',
+    adminInquiryRejected: 'Elutasítva',
+    adminInquiryMarkPending: 'Függőbe állítás',
+    adminInquiryApprove: 'Jóváhagyás',
+    adminInquiryReject: 'Elutasítás',
+    adminInquiryUpdateFailed: 'Állapotfrissítés sikertelen.',
     adminInquiryEmpty: 'Még nem érkezett megkeresés.',
     // Prayer management
     adminPrayerTag: 'Imák kezelése',
@@ -872,21 +888,53 @@ async function loadInquiries() {
 
   const inquiries = await api('/api/admin/inquiries');
   inquiryList.innerHTML = inquiries.map((inquiry) => {
+    const status = inquiry.status === 'approved' || inquiry.status === 'rejected' ? inquiry.status : 'pending';
+    const statusLabelKey = status === 'approved'
+      ? 'adminInquiryApproved'
+      : status === 'rejected'
+        ? 'adminInquiryRejected'
+        : 'adminInquiryPending';
+    const statusLabel = t(statusLabelKey);
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(inquiry.email)}&su=${encodeURIComponent('Re: ' + inquiry.subject)}&body=${encodeURIComponent('Dear ' + inquiry.name + ',\n\n')}`;
     return `
     <article class="admin-item">
       <div>
         <p class="section-tag">${new Date(inquiry.createdAt).toLocaleString()}</p>
+        <p class="section-tag">${t('adminInquiryStatus')}: ${escapeHtml(statusLabel)}</p>
         <h3>${escapeHtml(inquiry.subject)}</h3>
         <p><strong>${t('adminInquiryFrom')}:</strong> ${escapeHtml(inquiry.name)} &lt;${escapeHtml(inquiry.email)}&gt;</p>
         <p style="white-space: pre-wrap;">${escapeHtml(inquiry.message)}</p>
       </div>
       <div class="admin-item__actions">
+        <button class="button button--secondary update-inquiry-status" type="button" data-id="${inquiry.id}" data-status="pending" ${status === 'pending' ? 'disabled' : ''}>${t('adminInquiryMarkPending')}</button>
+        <button class="button button--secondary update-inquiry-status" type="button" data-id="${inquiry.id}" data-status="approved" ${status === 'approved' ? 'disabled' : ''}>${t('adminInquiryApprove')}</button>
+        <button class="button button--secondary update-inquiry-status" type="button" data-id="${inquiry.id}" data-status="rejected" ${status === 'rejected' ? 'disabled' : ''}>${t('adminInquiryReject')}</button>
         <a class="share-link" href="${escapeHtml(gmailUrl)}" target="_blank" rel="noreferrer">${t('adminInquiryReply')}</a>
         <button class="button button--secondary delete-inquiry" type="button" data-id="${inquiry.id}">${t('adminInquiryDelete')}</button>
       </div>
     </article>`;
   }).join('') || `<p class="empty-state">${t('adminInquiryEmpty')}</p>`;
+
+  inquiryList.querySelectorAll('.update-inquiry-status').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const inquiryId = button.dataset.id;
+      const status = button.dataset.status;
+
+      if (!inquiryId || !status) {
+        return;
+      }
+
+      try {
+        await api(`/api/admin/inquiries/${inquiryId}/status`, {
+          method: 'PATCH',
+          body: { status },
+        });
+        await loadInquiries();
+      } catch (error) {
+        alert(error instanceof Error ? error.message : t('adminInquiryUpdateFailed'));
+      }
+    });
+  });
 
   inquiryList.querySelectorAll('.delete-inquiry').forEach((button) => {
     button.addEventListener('click', async () => {

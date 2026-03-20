@@ -60,6 +60,10 @@ type InquiryPayload = {
   message?: string;
 };
 
+type InquiryStatusPayload = {
+  status?: string;
+};
+
 type EventPayload = {
   title?: string;
   category?: string;
@@ -304,6 +308,17 @@ if (!eventColumns.some((column) => column.name === 'event_end_time')) {
 }
 if (!eventColumns.some((column) => column.name === 'is_published')) {
   db.exec(`ALTER TABLE events ADD COLUMN is_published INTEGER NOT NULL DEFAULT 1`);
+}
+
+const inquiryColumns = db.prepare(`PRAGMA table_info(inquiries)`).all() as Array<{ name: string }>;
+if (!inquiryColumns.some((column) => column.name === 'status')) {
+  db.exec(`ALTER TABLE inquiries ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`);
+}
+if (!inquiryColumns.some((column) => column.name === 'reviewed_by')) {
+  db.exec(`ALTER TABLE inquiries ADD COLUMN reviewed_by INTEGER`);
+}
+if (!inquiryColumns.some((column) => column.name === 'reviewed_at')) {
+  db.exec(`ALTER TABLE inquiries ADD COLUMN reviewed_at TEXT`);
 }
 
 const eventStorage = multer.diskStorage({
@@ -1043,13 +1058,58 @@ app.get('/api/admin/overview', requireAdmin, (_req: Request, res: Response) => {
 app.get('/api/admin/inquiries', requireAdmin, (_req: Request, res: Response) => {
   const inquiries = db
     .prepare(
-      `SELECT id, name, email, subject, message, ip_address as ipAddress, created_at as createdAt
+      `SELECT id,
+              name,
+              email,
+              subject,
+              message,
+              status,
+              reviewed_by as reviewedBy,
+              reviewed_at as reviewedAt,
+              ip_address as ipAddress,
+              created_at as createdAt
        FROM inquiries
        ORDER BY created_at DESC`
     )
     .all();
   res.json(inquiries);
 });
+
+app.patch(
+  '/api/admin/inquiries/:id/status',
+  requireAdmin,
+  (req: Request<{ id: string }, unknown, InquiryStatusPayload>, res: Response) => {
+    const id = Number(req.params.id);
+    const requestedStatus = typeof req.body.status === 'string' ? req.body.status.trim().toLowerCase() : '';
+    const allowedStatuses = new Set(['pending', 'approved', 'rejected']);
+
+    if (!Number.isFinite(id)) {
+      res.status(400).json({ error: 'Invalid inquiry id.' });
+      return;
+    }
+
+    if (!allowedStatuses.has(requestedStatus)) {
+      res.status(400).json({ error: 'Status must be pending, approved, or rejected.' });
+      return;
+    }
+
+    const reviewedBy = requestedStatus === 'pending' ? null : res.locals.admin.userId;
+    const result = db.prepare(
+      `UPDATE inquiries
+       SET status = ?,
+           reviewed_by = ?,
+           reviewed_at = CASE WHEN ? = 'pending' THEN NULL ELSE CURRENT_TIMESTAMP END
+       WHERE id = ?`
+    ).run(requestedStatus, reviewedBy, requestedStatus, id);
+
+    if (!result.changes) {
+      res.status(404).json({ error: 'Inquiry not found.' });
+      return;
+    }
+
+    res.json({ ok: true, status: requestedStatus });
+  }
+);
 
 app.delete('/api/admin/inquiries/:id', requireAdmin, (req: Request<{ id: string }>, res: Response) => {
   const id = Number(req.params.id);

@@ -41,6 +41,7 @@
           <a href="#identity" data-i18n="navIdentity">Identity</a>
           <a href="#worship" data-i18n="navWorship">Worship</a>
           <a href="#prayers" data-i18n="navPrayers">Prayers</a>
+          <a href="#resources" data-i18n="navResources">Resources</a>
           <a href="#ministries" data-i18n="navMinistries">Ministries</a>
           <a href="#gallery" data-i18n="navGallery">Gallery</a>
           <a href="#contact" data-i18n="navContact">Contact</a>
@@ -75,16 +76,16 @@
             </div>
             <div class="hero__highlights">
               <article>
-                <span>Public Identity</span>
-                <strong>Amharic, English, Hungarian</strong>
+                <span data-i18n="heroLatestPrayerLabel">Latest prayer</span>
+                <strong id="hero-latest-prayer" data-i18n="heroLatestPrayerEmpty">No prayer yet</strong>
               </article>
               <article>
-                <span>Location</span>
-                <strong>Budapest, District VIII</strong>
+                <span data-i18n="heroLatestEventLabel">Latest event</span>
+                <strong id="hero-latest-event" data-i18n="heroLatestEventEmpty">No event yet</strong>
               </article>
               <article>
-                <span>Purpose</span>
-                <strong>Worship, sacraments, community</strong>
+                <span data-i18n="heroLatestResourceLabel">Latest resource</span>
+                <strong id="hero-latest-resource" data-i18n="heroLatestResourceEmpty">No resource yet</strong>
               </article>
             </div>
           </div>
@@ -223,6 +224,18 @@
           </div>
           <div class="prayer-list" id="event-list"></div>
           <p class="empty-state reveal" id="event-empty" data-i18n="eventsEmpty">No events have been published yet.</p>
+        </div>
+      </section>
+
+      <section class="section section--tinted" id="resources">
+        <div class="container">
+          <div class="section-heading reveal">
+            <p class="section-tag" data-i18n="resourcesTag">Documents and resources</p>
+            <h2 data-i18n="resourcesTitle">Published church documents and community resources</h2>
+            <p data-i18n="resourcesDesc">Official documents and shared resources are available here on the main page.</p>
+          </div>
+          <div class="prayer-list" id="resource-list"></div>
+          <p class="empty-state reveal" id="resource-empty" data-i18n="resourcesEmpty">No resources have been published yet.</p>
         </div>
       </section>
 
