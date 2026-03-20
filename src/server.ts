@@ -280,7 +280,19 @@ db.exec(`
     ip_address TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
-`);
+
+    CREATE TABLE IF NOT EXISTS community_access_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      email TEXT NOT NULL,
+      full_name TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      reviewed_by INTEGER,
+      reviewed_at TEXT,
+      notes TEXT,
+      ip_address TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
 
 const eventColumns = db.prepare(`PRAGMA table_info(events)`).all() as Array<{ name: string }>;
 if (!eventColumns.some((column) => column.name === 'event_end_time')) {
@@ -1119,6 +1131,225 @@ app.get('/api/admin/member-links', requireAdmin, (_req: Request, res: Response) 
   res.json(links);
 });
 
+  app.get('/api/admin/access-requests', requireAdmin, (req: Request<unknown, unknown, unknown, { status?: string }>, res: Response) => {
+    const status = req.query.status?.trim() || 'pending';
+    const requests = db
+      .prepare(
+        `SELECT id, email, full_name as fullName, status, reviewed_by as reviewedBy, reviewed_at as reviewedAt, notes, ip_address as ipAddress, created_at as createdAt
+         FROM community_access_requests
+         WHERE status = ?
+         ORDER BY created_at DESC`
+      )
+      .all(status);
+
+    res.json(requests);
+  });
+
+  app.post(
+    '/api/admin/access-requests/:id/approve',
+    requireAdmin,
+    async (req: Request<{ id: string }, unknown, { notes?: string }>, res: Response) => {
+      const id = Number(req.params.id);
+      const notes = req.body.notes?.trim() || '';
+
+      if (!Number.isFinite(id)) {
+        res.status(400).json({ error: 'Invalid request id.' });
+        return;
+      }
+
+      const request = db
+        .prepare(`SELECT id, email, full_name FROM community_access_requests WHERE id = ?`)
+        .get(id) as { id: number; email: string; full_name: string } | undefined;
+
+      if (!request) {
+        res.status(404).json({ error: 'Access request not found.' });
+        return;
+      }
+
+      // Create user account
+      const result = db
+        .prepare(
+          `INSERT INTO users (full_name, email, role, status, approved_at)
+           VALUES (?, ?, 'member', 'approved', CURRENT_TIMESTAMP)`
+        )
+        .run(request.full_name, request.email);
+
+      // Update access request status
+      db.prepare(
+        `UPDATE community_access_requests
+         SET status = 'approved', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, notes = ?
+         WHERE id = ?`
+      ).run(res.locals.admin.userId, notes, id);
+
+      writeActivityLog({
+        eventType: 'access_request_approved',
+        method: 'POST',
+        path: `/api/admin/access-requests/${id}/approve`,
+        statusCode: 200,
+        actorRole: 'admin',
+        actorId: res.locals.admin.userId,
+        actorName: res.locals.admin.username,
+        ipAddress: getClientIp(req) || '',
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+        details: `email=${request.email};userId=${result.lastInsertRowid}`,
+      });
+
+      // Requester notification is best-effort and should not block approval.
+      if (mailTransporter) {
+        const approvalText = [
+          `Hello ${request.full_name},`,
+          '',
+          'Your community access request has been approved.',
+          'You can now access the member portal using your email at /community.',
+          notes ? `Admin note: ${notes}` : '',
+        ].filter(Boolean).join('\n');
+
+        try {
+          const decisionEmailTimeoutMs = 15_000;
+          await Promise.race([
+            mailTransporter.sendMail({
+              from: inquiryFromAddress,
+              to: request.email,
+              subject: 'Community Access Request Approved',
+              text: approvalText,
+            }),
+            new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Approval notification email timed out.')), decisionEmailTimeoutMs);
+            }),
+          ]);
+
+          writeActivityLog({
+            eventType: 'access_request_approve_email_sent',
+            method: 'POST',
+            path: `/api/admin/access-requests/${id}/approve`,
+            statusCode: 200,
+            actorRole: 'admin',
+            actorId: res.locals.admin.userId,
+            actorName: res.locals.admin.username,
+            ipAddress: getClientIp(req) || '',
+            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+            details: `email=${request.email}`,
+          });
+        } catch (error) {
+          writeActivityLog({
+            eventType: 'access_request_approve_email_failed',
+            method: 'POST',
+            path: `/api/admin/access-requests/${id}/approve`,
+            statusCode: 200,
+            actorRole: 'admin',
+            actorId: res.locals.admin.userId,
+            actorName: res.locals.admin.username,
+            ipAddress: getClientIp(req) || '',
+            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+            details: `email=${request.email};reason=${error instanceof Error ? error.message : 'unknown'}`,
+          });
+        }
+      }
+
+      res.json({
+        message: 'Access request approved. New member account created.',
+        userId: result.lastInsertRowid,
+        email: request.email,
+      });
+    }
+  );
+
+  app.post(
+    '/api/admin/access-requests/:id/reject',
+    requireAdmin,
+    async (req: Request<{ id: string }, unknown, { notes?: string }>, res: Response) => {
+      const id = Number(req.params.id);
+      const notes = req.body.notes?.trim() || '';
+
+      if (!Number.isFinite(id)) {
+        res.status(400).json({ error: 'Invalid request id.' });
+        return;
+      }
+
+      const request = db
+        .prepare(`SELECT id, email, full_name FROM community_access_requests WHERE id = ?`)
+        .get(id) as { id: number; email: string; full_name: string } | undefined;
+
+      if (!request) {
+        res.status(404).json({ error: 'Access request not found.' });
+        return;
+      }
+
+      // Update access request status
+      db.prepare(
+        `UPDATE community_access_requests
+         SET status = 'rejected', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, notes = ?
+         WHERE id = ?`
+      ).run(res.locals.admin.userId, notes, id);
+
+      writeActivityLog({
+        eventType: 'access_request_rejected',
+        method: 'POST',
+        path: `/api/admin/access-requests/${id}/reject`,
+        statusCode: 200,
+        actorRole: 'admin',
+        actorId: res.locals.admin.userId,
+        actorName: res.locals.admin.username,
+        ipAddress: getClientIp(req) || '',
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+        details: `email=${request.email}`,
+      });
+
+      // Requester notification is best-effort and should not block rejection.
+      if (mailTransporter) {
+        const rejectionText = [
+          `Hello ${request.full_name},`,
+          '',
+          'Your community access request has been reviewed and was not approved.',
+          notes ? `Admin note: ${notes}` : '',
+        ].filter(Boolean).join('\n');
+
+        try {
+          const decisionEmailTimeoutMs = 15_000;
+          await Promise.race([
+            mailTransporter.sendMail({
+              from: inquiryFromAddress,
+              to: request.email,
+              subject: 'Community Access Request Update',
+              text: rejectionText,
+            }),
+            new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Rejection notification email timed out.')), decisionEmailTimeoutMs);
+            }),
+          ]);
+
+          writeActivityLog({
+            eventType: 'access_request_reject_email_sent',
+            method: 'POST',
+            path: `/api/admin/access-requests/${id}/reject`,
+            statusCode: 200,
+            actorRole: 'admin',
+            actorId: res.locals.admin.userId,
+            actorName: res.locals.admin.username,
+            ipAddress: getClientIp(req) || '',
+            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+            details: `email=${request.email}`,
+          });
+        } catch (error) {
+          writeActivityLog({
+            eventType: 'access_request_reject_email_failed',
+            method: 'POST',
+            path: `/api/admin/access-requests/${id}/reject`,
+            statusCode: 200,
+            actorRole: 'admin',
+            actorId: res.locals.admin.userId,
+            actorName: res.locals.admin.username,
+            ipAddress: getClientIp(req) || '',
+            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+            details: `email=${request.email};reason=${error instanceof Error ? error.message : 'unknown'}`,
+          });
+        }
+      }
+
+      res.json({ message: 'Access request rejected.' });
+    }
+  );
+
 app.get('/api/admin/resources', requireAdmin, (_req: Request, res: Response) => {
   const resources = db
     .prepare(
@@ -1451,6 +1682,133 @@ app.post('/api/public/community/access', (req: Request<unknown, unknown, { email
     },
   });
 });
+
+  app.post(
+    '/api/public/community/request-access',
+    async (req: Request<unknown, unknown, { email?: string; fullName?: string }>, res: Response) => {
+      const email = req.body.email?.trim().toLowerCase();
+      const fullName = req.body.fullName?.trim();
+
+      if (!email || !fullName) {
+        res.status(400).json({ error: 'Email and full name are required.' });
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        res.status(400).json({ error: 'Valid email is required.' });
+        return;
+      }
+
+      if (fullName.length < 3 || fullName.length > 100) {
+        res.status(400).json({ error: 'Full name must be between 3 and 100 characters.' });
+        return;
+      }
+
+      // Check if email already exists in users table
+      const existingUser = db
+        .prepare(`SELECT id, email FROM users WHERE email = ?`)
+        .get(email) as { id: number; email: string } | undefined;
+
+      if (existingUser) {
+        res.status(409).json({ error: 'Email already registered. Please use the member login.' });
+        return;
+      }
+
+      // Check for duplicate request (prevent spam)
+      const recentRequest = db
+        .prepare(
+          `SELECT id FROM community_access_requests
+           WHERE email = ? AND status = 'pending' AND datetime(created_at) > datetime('now', '-24 hours')`
+        )
+        .get(email) as { id: number } | undefined;
+
+      if (recentRequest) {
+        res.status(400).json({ error: 'Access request already pending for this email. Please wait for admin review.' });
+        return;
+      }
+
+      const ipAddress = getClientIp(req) || '';
+
+      // Create access request
+      const result = db
+        .prepare(
+          `INSERT INTO community_access_requests (email, full_name, ip_address)
+           VALUES (?, ?, ?)`
+        )
+        .run(email, fullName, ipAddress);
+
+      writeActivityLog({
+        eventType: 'community_access_requested',
+        method: 'POST',
+        path: '/api/public/community/request-access',
+        statusCode: 201,
+        actorRole: 'guest',
+        actorName: fullName,
+        ipAddress: ipAddress,
+        userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+        details: `email=${email}`,
+      });
+
+      // Email delivery is best-effort; failures are logged but do not block request creation.
+      if (mailTransporter && inquiryDestination) {
+        const accessRequestText = [
+          'New community access request',
+          '',
+          `Full name: ${fullName}`,
+          `Email: ${email}`,
+          `IP: ${ipAddress || 'unknown'}`,
+          `Request ID: ${String(result.lastInsertRowid)}`,
+          '',
+          'Review this request in the admin panel under Member access requests.',
+        ].join('\n');
+
+        try {
+          const accessRequestTimeoutMs = 15_000;
+          await Promise.race([
+            mailTransporter.sendMail({
+              from: inquiryFromAddress,
+              to: inquiryDestination,
+              replyTo: email,
+              subject: `[Community Access Request] ${fullName}`,
+              text: accessRequestText,
+            }),
+            new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Access request email timed out.')), accessRequestTimeoutMs);
+            }),
+          ]);
+
+          writeActivityLog({
+            eventType: 'community_access_request_email_sent',
+            method: 'POST',
+            path: '/api/public/community/request-access',
+            statusCode: 201,
+            actorRole: 'guest',
+            actorName: fullName,
+            ipAddress,
+            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+            details: `email=${email}`,
+          });
+        } catch (error) {
+          writeActivityLog({
+            eventType: 'community_access_request_email_failed',
+            method: 'POST',
+            path: '/api/public/community/request-access',
+            statusCode: 201,
+            actorRole: 'guest',
+            actorName: fullName,
+            ipAddress,
+            userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '',
+            details: `email=${email};reason=${error instanceof Error ? error.message : 'unknown'}`,
+          });
+        }
+      }
+
+      res.status(201).json({
+        message: 'Access request submitted. Admin will review your request shortly.',
+        requestId: result.lastInsertRowid,
+      });
+    }
+  );
 
 app.get('/api/public/community/resources', (_req: Request, res: Response) => {
   const resources = db

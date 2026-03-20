@@ -502,6 +502,8 @@ const eventAdminList = document.querySelector('#event-admin-list');
 const eventDocumentStatus = document.querySelector('#event-document-status');
 const registrationList = document.querySelector('#registration-list');
 const visitorList = document.querySelector('#visitor-list');
+const accessRequestsList = document.querySelector('#access-requests-list');
+
 const systemLogList = document.querySelector('#system-log-list');
 const adminStats = document.querySelector('#admin-stats');
 const memberLinkForm = document.querySelector('#member-link-form');
@@ -1226,6 +1228,75 @@ async function loadRegistrations() {
   });
 }
 
+  async function loadAccessRequests() {
+    const requests = await api('/api/admin/access-requests?status=pending');
+  
+    accessRequestsList.innerHTML = requests.map((request) => `
+      <article class="admin-item">
+        <div>
+          <p class="section-tag" style="background-color: #fff3cd; color: #856404; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85rem;">PENDING</p>
+          <h3>${escapeHtml(request.fullName)}</h3>
+          <p>${escapeHtml(request.email)}</p>
+          <p style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">From: ${escapeHtml(request.ipAddress || 'Unknown')}</p>
+          <p style="font-size: 0.85rem; color: #666;">Requested: ${new Date(request.createdAt).toLocaleString()}</p>
+        </div>
+        <div class="admin-item__actions">
+          <button class="button button--primary admin-access-request-approve" type="button" data-id="${request.id}" data-email="${escapeHtml(request.email)}">Approve</button>
+          <button class="button button--secondary admin-access-request-reject" type="button" data-id="${request.id}">Reject</button>
+        </div>
+      </article>
+    `).join('') || '<p class="empty-state">No pending access requests.</p>';
+
+    accessRequestsList.querySelectorAll('.admin-access-request-approve').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const notes = prompt('Add optional notes about this approval:');
+        if (notes === null) {
+          return;
+        }
+
+        try {
+          await api(`/api/admin/access-requests/${button.dataset.id}/approve`, {
+            method: 'POST',
+            body: JSON.stringify({ notes }),
+          });
+          loginFeedback.textContent = 'Access request approved. New member account created.';
+          loginFeedback.style.color = '#0a7e4f';
+          await Promise.all([loadAccessRequests(), loadOverview()]);
+        } catch (error) {
+          loginFeedback.textContent = error instanceof Error ? error.message : 'Failed to approve request.';
+          loginFeedback.style.color = '#c41e3a';
+        }
+      });
+    });
+
+    accessRequestsList.querySelectorAll('.admin-access-request-reject').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const confirmed = window.confirm('Reject this access request?');
+        if (!confirmed) {
+          return;
+        }
+
+        const notes = prompt('Add optional notes about this rejection:');
+        if (notes === null) {
+          return;
+        }
+
+        try {
+          await api(`/api/admin/access-requests/${button.dataset.id}/reject`, {
+            method: 'POST',
+            body: JSON.stringify({ notes }),
+          });
+          loginFeedback.textContent = 'Access request rejected.';
+          loginFeedback.style.color = '#0a7e4f';
+          await Promise.all([loadAccessRequests(), loadOverview()]);
+        } catch (error) {
+          loginFeedback.textContent = error instanceof Error ? error.message : 'Failed to reject request.';
+          loginFeedback.style.color = '#c41e3a';
+        }
+      });
+    });
+  }
+
 async function loadVisitors() {
   const visitors = await api('/api/admin/visitors?limit=50');
   visitorList.innerHTML = visitors.map((visitor) => `
@@ -1283,6 +1354,7 @@ async function hydrateDashboard() {
     loadDeletedPrayers(),
     loadEvents(),
     loadRegistrations(),
+      loadAccessRequests(),
     loadVisitors(),
     loadSystemLogs(),
     loadApprovedMembers(),

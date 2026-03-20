@@ -38,6 +38,35 @@
           </form>
           
           <p class="form-feedback" id="community-gate-feedback" role="status" aria-live="polite"></p>
+          <section id="community-request-section" style="display: none; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #ddd;">
+            <h2 style="margin-bottom: 1rem;">Request Access</h2>
+            <p>Your email was not found in our system. Submit your information below and our administrator will review your access request.</p>
+          
+            <form id="community-request-form">
+              <label for="request-email" style="display: block; margin: 1.5rem 0 0.5rem 0; font-weight: 600;">Email Address</label>
+              <input 
+                id="request-email" 
+                type="email" 
+                placeholder="your.email@example.com" 
+                required
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; margin-bottom: 1rem;"
+              >
+            
+              <label for="request-fullname" style="display: block; margin: 1.5rem 0 0.5rem 0; font-weight: 600;">Full Name</label>
+              <input 
+                id="request-fullname" 
+                type="text" 
+                placeholder="John Doe" 
+                required
+                style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; margin-bottom: 1rem;"
+              >
+            
+              <button type="submit" class="button button--primary" style="width: 100%; margin-bottom: 0.5rem;">Submit Request</button>
+              <button type="button" id="request-cancel" class="button button--secondary" style="width: 100%;">Back to Email Entry</button>
+            </form>
+          
+            <p class="form-feedback" id="community-request-feedback" role="status" aria-live="polite"></p>
+          </section>
         </section>
 
         <section class="admin-dashboard" id="community-dashboard" hidden>

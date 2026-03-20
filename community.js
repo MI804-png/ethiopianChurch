@@ -7,6 +7,13 @@ const resourceList = document.querySelector('#community-resource-list');
 const accessForm = document.querySelector('#community-access-form');
 const accessEmail = document.querySelector('#access-email');
 
+const requestSection = document.querySelector('#community-request-section');
+const requestForm = document.querySelector('#community-request-form');
+const requestEmail = document.querySelector('#request-email');
+const requestFullname = document.querySelector('#request-fullname');
+const requestFeedback = document.querySelector('#community-request-feedback');
+const requestCancel = document.querySelector('#request-cancel');
+
 async function api(url, options = {}) {
   const response = await fetch(url, {
     credentials: 'include',
@@ -47,6 +54,35 @@ async function requestAccessByEmail(email) {
   gateFeedback.textContent = '';
   return result;
 }
+
+  async function submitAccessRequest(email, fullName) {
+    requestFeedback.textContent = 'Submitting your access request...';
+    requestFeedback.style.color = '#000';
+  
+    const result = await api('/api/public/community/request-access', {
+      method: 'POST',
+      body: JSON.stringify({ email, fullName }),
+    });
+
+    requestFeedback.textContent = '';
+    return result;
+  }
+
+  function showRequestForm(email) {
+    requestSection.style.display = 'block';
+    requestEmail.value = email;
+    requestEmail.readOnly = true;
+    requestFullname.focus();
+  }
+
+  function hideRequestForm() {
+    requestSection.style.display = 'none';
+    requestEmail.value = '';
+    requestEmail.readOnly = false;
+    requestFullname.value = '';
+    requestFeedback.textContent = '';
+    accessEmail.focus();
+  }
 
 async function loadResources() {
   const resources = await api('/api/community/resources');
@@ -105,9 +141,43 @@ if (accessForm) {
     } catch (error) {
       gateFeedback.textContent = error instanceof Error ? error.message : 'Access denied.';
       gateFeedback.style.color = '#c41e3a';
+      
+        // If email not found, show request form
+        if (error instanceof Error && error.message.includes('not found')) {
+          showRequestForm(email);
+        }
     }
   });
 }
+
+  if (requestForm) {
+    requestForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = requestEmail.value.trim();
+      const fullName = requestFullname.value.trim();
+
+      if (!email || !fullName) {
+        requestFeedback.textContent = 'Email and full name are required.';
+        requestFeedback.style.color = '#c41e3a';
+        return;
+      }
+
+      try {
+        await submitAccessRequest(email, fullName);
+        requestFeedback.textContent = 'Your access request has been submitted! The administrator will review it shortly.';
+        requestFeedback.style.color = '#0a7e4f';
+        requestForm.reset();
+        setTimeout(() => hideRequestForm(), 3000);
+      } catch (error) {
+        requestFeedback.textContent = error instanceof Error ? error.message : 'Failed to submit request.';
+        requestFeedback.style.color = '#c41e3a';
+      }
+    });
+  }
+
+  if (requestCancel) {
+    requestCancel.addEventListener('click', hideRequestForm);
+  }
 
 if (logoutButton) {
   logoutButton.addEventListener('click', async () => {
