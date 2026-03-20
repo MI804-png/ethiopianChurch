@@ -1385,6 +1385,85 @@ app.get('/api/community/resources', requireMember, (_req: Request, res: Response
   res.json(resources);
 });
 
+app.post('/api/public/community/access', (req: Request<unknown, unknown, { email?: string }>, res: Response) => {
+  const email = req.body.email?.trim().toLowerCase();
+
+  if (!email) {
+    res.status(400).json({ error: 'Email is required.' });
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    res.status(400).json({ error: 'Valid email is required.' });
+    return;
+  }
+
+  // Check if user is approved member
+  const member = db
+    .prepare(
+      `SELECT id, full_name as fullName, email, status
+       FROM users
+       WHERE email = ? AND role = 'member'`
+    )
+    .get(email) as { id: number; fullName: string; email: string; status: string } | undefined;
+
+  if (!member) {
+    res.status(404).json({ error: 'Email not found in member list.' });
+    return;
+  }
+
+  if (member.status === 'pending') {
+    res.status(403).json({ error: 'Your membership is pending admin approval.' });
+    return;
+  }
+
+  if (member.status === 'rejected') {
+    res.status(403).json({ error: 'Your membership application was rejected.' });
+    return;
+  }
+
+  // Member is approved - issue token
+  const memberToken = issueMemberToken({
+    userId: member.id,
+    role: 'member',
+    fullName: member.fullName,
+    email: member.email,
+  });
+
+  res.cookie('church_member_session', memberToken, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+  });
+
+  res.status(200).json({
+    message: 'Access granted.',
+    member: {
+      id: member.id,
+      fullName: member.fullName,
+      email: member.email,
+    },
+  });
+});
+
+app.get('/api/public/community/resources', (_req: Request, res: Response) => {
+  const resources = db
+    .prepare(
+      `SELECT id,
+              title,
+              type,
+              url,
+              description,
+              created_at as createdAt
+       FROM community_resources
+       ORDER BY created_at DESC`
+    )
+    .all();
+
+  res.json(resources);
+});
+
 app.get('/api/admin/events', requireAdmin, (_req: Request, res: Response) => {
   const events = db
     .prepare(

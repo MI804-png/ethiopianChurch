@@ -22,8 +22,21 @@
       <div class="container admin-shell">
         <section class="admin-auth-card" id="community-gate">
           <p class="section-tag">Community access</p>
-          <h1>Secure member content</h1>
-          <p>Use your approved community link to enter. Access is restricted to approved members only.</p>
+          <h1>Member Resources</h1>
+          <p>Enter your email to access approved member resources. You must be approved by the administrator.</p>
+          
+          <form id="community-access-form">
+            <label for="access-email" style="display: block; margin: 1.5rem 0 0.5rem 0; font-weight: 600;">Email Address</label>
+            <input 
+              id="access-email" 
+              type="email" 
+              placeholder="your.email@example.com" 
+              required
+              style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; margin-bottom: 1rem;"
+            >
+            <button type="submit" class="button button--primary" style="width: 100%;">Access Resources</button>
+          </form>
+          
           <p class="form-feedback" id="community-gate-feedback" role="status" aria-live="polite"></p>
         </section>
 

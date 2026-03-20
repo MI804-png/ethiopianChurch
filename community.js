@@ -4,6 +4,8 @@ const dashboard = document.querySelector('#community-dashboard');
 const memberLabel = document.querySelector('#community-member');
 const logoutButton = document.querySelector('#community-logout');
 const resourceList = document.querySelector('#community-resource-list');
+const accessForm = document.querySelector('#community-access-form');
+const accessEmail = document.querySelector('#access-email');
 
 async function api(url, options = {}) {
   const response = await fetch(url, {
@@ -34,23 +36,16 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
-async function consumeAccessLinkIfPresent() {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('access');
-
-  if (!token) {
-    return;
-  }
-
-  gateFeedback.textContent = 'Validating community access link...';
-  await api('/api/community/auth/link', {
+async function requestAccessByEmail(email) {
+  gateFeedback.textContent = 'Verifying email and checking approval status...';
+  
+  const result = await api('/api/public/community/access', {
     method: 'POST',
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ email }),
   });
 
-  params.delete('access');
-  const nextUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
-  window.history.replaceState({}, '', nextUrl);
+  gateFeedback.textContent = '';
+  return result;
 }
 
 async function loadResources() {
@@ -69,7 +64,6 @@ async function loadResources() {
 
 async function init() {
   try {
-    await consumeAccessLinkIfPresent();
     const session = await api('/api/community/session');
 
     gate.hidden = true;
@@ -80,10 +74,39 @@ async function init() {
   } catch (error) {
     gate.hidden = false;
     dashboard.hidden = true;
-    gateFeedback.textContent = error instanceof Error
-      ? error.message
-      : 'Community access is restricted to approved members.';
   }
+}
+
+if (accessForm) {
+  accessForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = accessEmail.value.trim();
+
+    if (!email) {
+      gateFeedback.textContent = 'Please enter your email address.';
+      gateFeedback.style.color = '#c41e3a';
+      return;
+    }
+
+    try {
+      await requestAccessByEmail(email);
+      
+      // Clear form
+      accessForm.reset();
+      
+      // Show dashboard
+      gate.hidden = true;
+      dashboard.hidden = false;
+      
+      // Load session and resources
+      const session = await api('/api/community/session');
+      memberLabel.textContent = `${session.member.fullName}`;
+      await loadResources();
+    } catch (error) {
+      gateFeedback.textContent = error instanceof Error ? error.message : 'Access denied.';
+      gateFeedback.style.color = '#c41e3a';
+    }
+  });
 }
 
 if (logoutButton) {
