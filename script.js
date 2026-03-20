@@ -338,7 +338,7 @@ const translations = {
     navBecomeMember: 'አባል መሆን ይፈልጋሉ?',
     navMemberDashboard: 'የአባል ዳሽቦርድ',
     languageLabel: 'ቋንቋ',
-    heroEyebrow: 'በጀርመንና አካባቢው ሀገረ ስብከት ስር ያለ የቡዳፔስት ደብር'
+    heroEyebrow: 'በጀርመንና አካባቢው ሀገረ ስብከት ስር ያለ የቡዳፔስት ደብር',
     heroLead: 'ይህ ድረ-ገጽ የቤተክርስቲያኑን ይፋዊ መለያ፣ የአምልኮ ህይወት፣ የማህበረሰብ ተልዕኮ እና አድራሻ በባለሙያ መልኩ ያቀርባል።',
     heroAddressBtn: 'ይፋዊ አድራሻ ይመልከቱ',
     heroPrayerBtn: 'የጸሎት ሰሌዳ',

@@ -99,6 +99,29 @@ function resolveRuntimePath(configuredPath: string | undefined, fallbackPath: st
   return path.resolve(configuredPath);
 }
 
+function copyDirectoryMissingFiles(sourceDir: string, targetDir: string) {
+  if (!fs.existsSync(sourceDir)) {
+    return;
+  }
+
+  fs.mkdirSync(targetDir, { recursive: true });
+  const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const sourcePath = path.join(sourceDir, entry.name);
+    const targetPath = path.join(targetDir, entry.name);
+
+    if (entry.isDirectory()) {
+      copyDirectoryMissingFiles(sourcePath, targetPath);
+      continue;
+    }
+
+    if (entry.isFile() && !fs.existsSync(targetPath)) {
+      fs.copyFileSync(sourcePath, targetPath);
+    }
+  }
+}
+
 const renderPersistentRoot = '/opt/render/project/src/persistent';
 const defaultDataDir = path.join(projectRoot, 'data');
 const defaultUploadsDir = path.join(projectRoot, 'uploads');
@@ -169,6 +192,12 @@ if (
   && fs.existsSync(legacyHomepageContentPath)
 ) {
   fs.copyFileSync(legacyHomepageContentPath, homepageContentPath);
+}
+
+if (uploadsDir !== defaultUploadsDir) {
+  copyDirectoryMissingFiles(path.join(defaultUploadsDir, 'events'), eventUploadsDir);
+  copyDirectoryMissingFiles(path.join(defaultUploadsDir, 'gallery'), galleryUploadsDir);
+  copyDirectoryMissingFiles(path.join(defaultUploadsDir, 'resources'), resourceUploadsDir);
 }
 
 console.info(
