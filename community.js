@@ -186,8 +186,10 @@ if (accessForm) {
       gateFeedback.textContent = error instanceof Error ? error.message : 'Access denied.';
       gateFeedback.style.color = '#c41e3a';
       
-        // If email not found, show request form
-        if (error instanceof Error && error.message.includes('not found')) {
+        // Only show the request form when the email is completely unknown.
+        // If there is already a pending/rejected request, just show the message.
+        const msg = error instanceof Error ? error.message : '';
+        if (msg.includes('not found')) {
           showRequestForm(email);
         }
     }

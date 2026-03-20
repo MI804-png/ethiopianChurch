@@ -1716,6 +1716,23 @@ app.post('/api/public/community/access', (req: Request<unknown, unknown, { email
     .get(email) as { id: number; fullName: string; email: string; status: string } | undefined;
 
   if (!member) {
+    // Check whether the email belongs to a pending or rejected access request
+    const accessRequest = db
+      .prepare(
+        `SELECT status FROM community_access_requests WHERE email = ? ORDER BY created_at DESC LIMIT 1`
+      )
+      .get(email) as { status: string } | undefined;
+
+    if (accessRequest?.status === 'pending') {
+      res.status(403).json({ error: 'Your access request is pending admin review. You will be notified once approved.' });
+      return;
+    }
+
+    if (accessRequest?.status === 'rejected') {
+      res.status(403).json({ error: 'Your access request was not approved. Please contact the church for more information.' });
+      return;
+    }
+
     res.status(404).json({ error: 'Email not found in member list.' });
     return;
   }

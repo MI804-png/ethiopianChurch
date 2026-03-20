@@ -1044,6 +1044,10 @@ h3,
   margin: 0 auto;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .admin-dashboard {
   display: grid;
   gap: 1.5rem;
