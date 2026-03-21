@@ -64,6 +64,22 @@
           <section class="admin-card admin-card--wide">
             <div class="admin-card__header">
               <div>
+                <p class="section-tag" data-i18n="adminBackupTag">Backup and restore</p>
+                <h2 data-i18n="adminBackupTitle">Restore website data without coding</h2>
+                <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0 0 0;" data-i18n="adminBackupDesc">Choose a snapshot and restore database, homepage text, and uploads. The server restarts automatically.</p>
+              </div>
+              <div class="admin-header__actions">
+                <button class="button button--primary" id="backup-create-button" type="button" data-i18n="adminBackupCreateNow">Create snapshot now</button>
+                <button class="button button--secondary" id="backup-refresh-button" type="button" data-i18n="adminBackupRefresh">Refresh snapshots</button>
+              </div>
+            </div>
+            <p class="form-feedback" id="backup-feedback" role="status" aria-live="polite"></p>
+            <div class="admin-list" id="backup-list"></div>
+          </section>
+
+          <section class="admin-card admin-card--wide">
+            <div class="admin-card__header">
+              <div>
                 <p class="section-tag" data-i18n="adminHomeEditorTag">Homepage content editor</p>
                 <h2 data-i18n="adminHomeEditorTitle">Edit any text on the home page</h2>
                 <p style="font-size: 0.9rem; color: #666; margin: 0.5rem 0 0 0;" data-i18n="adminHomeEditorDesc">Load the current home page sources, edit text, then save. Changes apply immediately.</p>

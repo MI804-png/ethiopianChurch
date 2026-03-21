@@ -64,6 +64,10 @@ type InquiryStatusPayload = {
   status?: string;
 };
 
+type BackupRestorePayload = {
+  snapshotName?: string;
+};
+
 type EventPayload = {
   title?: string;
   category?: string;
@@ -254,9 +258,9 @@ console.info(
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
-function createBackupSnapshot(reason: 'startup' | 'scheduled') {
+function createBackupSnapshot(reason: 'startup' | 'scheduled' | 'manual') {
   if (!automaticBackupsEnabled) {
-    return;
+    return false;
   }
 
   const snapshotTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -287,8 +291,10 @@ function createBackupSnapshot(reason: 'startup' | 'scheduled') {
     };
     fs.writeFileSync(path.join(snapshotDir, 'metadata.json'), JSON.stringify(metadata), 'utf8');
     console.info(`[backup] Snapshot created at ${snapshotDir} (${reason})`);
+    return true;
   } catch (error) {
     console.error(`[backup] Snapshot failed (${reason}):`, error);
+    return false;
   }
 }
 
@@ -336,6 +342,93 @@ function startAutomaticBackups() {
   console.info(
     `[backup] Automatic backups enabled. dir=${backupDir} intervalHours=${backupIntervalHours} retentionDays=${backupRetentionDays}`
   );
+}
+
+function isSafeSnapshotName(value: string) {
+  return /^snapshot-[A-Za-z0-9._:-]+$/.test(value);
+}
+
+function getSnapshotPath(snapshotName: string) {
+  if (!isSafeSnapshotName(snapshotName)) {
+    return null;
+  }
+
+  const resolvedPath = path.resolve(backupDir, snapshotName);
+  const normalizedBackupDir = path.resolve(backupDir);
+  const isInsideBackupDir = resolvedPath === normalizedBackupDir || resolvedPath.startsWith(`${normalizedBackupDir}${path.sep}`);
+  return isInsideBackupDir ? resolvedPath : null;
+}
+
+function listBackupSnapshots() {
+  if (!automaticBackupsEnabled || !fs.existsSync(backupDir)) {
+    return [];
+  }
+
+  const entries = fs.readdirSync(backupDir, { withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith('snapshot-'))
+    .map((entry) => {
+      const snapshotPath = path.join(backupDir, entry.name);
+      const stats = fs.statSync(snapshotPath);
+      const metadataPath = path.join(snapshotPath, 'metadata.json');
+
+      let reason: 'startup' | 'scheduled' | 'manual' | 'unknown' = 'unknown';
+      let createdAt = new Date(stats.mtimeMs).toISOString();
+
+      if (fs.existsSync(metadataPath)) {
+        try {
+          const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8')) as { reason?: string; createdAt?: string };
+          if (metadata.reason === 'startup' || metadata.reason === 'scheduled' || metadata.reason === 'manual') {
+            reason = metadata.reason;
+          }
+          if (typeof metadata.createdAt === 'string' && metadata.createdAt.trim()) {
+            createdAt = metadata.createdAt;
+          }
+        } catch {
+          // Ignore malformed metadata and continue with filesystem stats.
+        }
+      }
+
+      return {
+        name: entry.name,
+        createdAt,
+        reason,
+        sizeMb: Number((stats.size / (1024 * 1024)).toFixed(2)),
+      };
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+function restoreBackupSnapshot(snapshotName: string) {
+  const snapshotPath = getSnapshotPath(snapshotName);
+  if (!snapshotPath || !fs.existsSync(snapshotPath)) {
+    throw new Error('Backup snapshot not found.');
+  }
+
+  const snapshotDbPath = path.join(snapshotPath, 'church.db');
+  const snapshotHomepagePath = path.join(snapshotPath, 'homepage-content.json');
+  const snapshotUploadsPath = path.join(snapshotPath, 'uploads');
+
+  if (!fs.existsSync(snapshotDbPath)) {
+    throw new Error('Backup snapshot is missing church.db.');
+  }
+
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(uploadsDir, { recursive: true });
+
+  // Closing DB before replacing file avoids sqlite lock/corruption issues.
+  db.close();
+
+  fs.copyFileSync(snapshotDbPath, dbPath);
+
+  if (fs.existsSync(snapshotHomepagePath)) {
+    fs.copyFileSync(snapshotHomepagePath, homepageContentPath);
+  }
+
+  if (fs.existsSync(snapshotUploadsPath)) {
+    fs.rmSync(uploadsDir, { recursive: true, force: true });
+    fs.cpSync(snapshotUploadsPath, uploadsDir, { recursive: true, force: true });
+  }
 }
 
 db.exec(`
@@ -1148,6 +1241,77 @@ app.post('/api/admin/logout', (_req: Request, res: Response) => {
 
 app.get('/api/admin/session', requireAdmin, (_req: Request, res: Response) => {
   res.json({ authenticated: true, admin: res.locals.admin });
+});
+
+app.get('/api/admin/backups', requireAdmin, (_req: Request, res: Response) => {
+  res.json({
+    backupsEnabled: automaticBackupsEnabled,
+    backupDir,
+    snapshots: listBackupSnapshots(),
+  });
+});
+
+app.post('/api/admin/backups/create', requireAdmin, (req: Request, res: Response) => {
+  if (!automaticBackupsEnabled) {
+    res.status(400).json({ error: 'Automatic backups are disabled.' });
+    return;
+  }
+
+  try {
+    const created = createBackupSnapshot('manual');
+    if (!created) {
+      res.status(500).json({ error: 'Snapshot creation failed.' });
+      return;
+    }
+    cleanupOldBackups();
+    res.status(201).json({ message: 'Snapshot created successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Snapshot creation failed.' });
+  }
+});
+
+app.post('/api/admin/backups/restore', requireAdmin, (req: Request<unknown, unknown, BackupRestorePayload>, res: Response) => {
+  const snapshotName = req.body.snapshotName?.trim() || '';
+
+  if (!snapshotName) {
+    res.status(400).json({ error: 'snapshotName is required.' });
+    return;
+  }
+
+  if (!isSafeSnapshotName(snapshotName)) {
+    res.status(400).json({ error: 'Invalid snapshotName.' });
+    return;
+  }
+
+  const actorName = res.locals.admin.username;
+
+  res.status(202).json({
+    message: 'Restore started. The server will restart shortly.',
+    snapshotName,
+  });
+
+  setTimeout(() => {
+    try {
+      restoreBackupSnapshot(snapshotName);
+      console.info(`[backup] Restore completed from ${snapshotName}. Restarting process.`);
+      process.exit(0);
+    } catch (error) {
+      console.error(`[backup] Restore failed for ${snapshotName}:`, error);
+      try {
+        writeActivityLog({
+          eventType: 'backup_restore_failed',
+          method: 'POST',
+          path: '/api/admin/backups/restore',
+          statusCode: 500,
+          actorRole: 'admin',
+          actorName,
+          details: `snapshot=${snapshotName};reason=${error instanceof Error ? error.message : 'unknown'}`,
+        });
+      } catch {
+        // Ignore log write failures during restore.
+      }
+    }
+  }, 250);
 });
 
 app.get('/api/admin/homepage-content', requireAdmin, (_req: Request, res: Response) => {

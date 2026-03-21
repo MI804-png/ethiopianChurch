@@ -228,6 +228,26 @@ const adminTranslations = {
     adminHomeEditorSaving: 'Saving homepage text...',
     adminHomeEditorSaved: 'Homepage text saved.',
     adminHomeEditorFailed: 'Failed to update homepage text.',
+    // Backup restore
+    adminBackupTag: 'Backup and restore',
+    adminBackupTitle: 'Restore website data without coding',
+    adminBackupDesc: 'Choose a snapshot and restore database, homepage text, and uploads. The server restarts automatically.',
+    adminBackupCreateNow: 'Create snapshot now',
+    adminBackupRefresh: 'Refresh snapshots',
+    adminBackupLoading: 'Loading backups...',
+    adminBackupCreating: 'Creating snapshot...',
+    adminBackupCreated: 'Snapshot created successfully.',
+    adminBackupEmpty: 'No snapshots found yet.',
+    adminBackupRestore: 'Restore snapshot',
+    adminBackupRestoreConfirm: 'Restore this snapshot now? The server will restart and current data will be replaced.',
+    adminBackupRestoreStarted: 'Restore started. The server will restart shortly.',
+    adminBackupRestoreFailed: 'Restore failed.',
+    adminBackupManual: 'Manual',
+    adminBackupScheduled: 'Scheduled',
+    adminBackupStartup: 'Startup',
+    adminBackupUnknownReason: 'Unknown',
+    adminBackupReason: 'Reason',
+    adminBackupCreatedAt: 'Created',
     // Deleted prayer
     adminPrayerDeletedTag: 'Deleted',
   },
@@ -459,6 +479,26 @@ const adminTranslations = {
     adminHomeEditorSaving: 'Főoldal szöveg mentése...',
     adminHomeEditorSaved: 'Főoldal szöveg mentve.',
     adminHomeEditorFailed: 'A főoldal frissítése sikertelen.',
+    // Backup restore
+    adminBackupTag: 'Biztonsági mentés és visszaállítás',
+    adminBackupTitle: 'Weboldal adatok visszaállítása programozás nélkül',
+    adminBackupDesc: 'Válasszon pillanatképet, majd állítsa vissza az adatbázist, a főoldal szövegét és a feltöltéseket. A szerver automatikusan újraindul.',
+    adminBackupCreateNow: 'Pillanatkép készítése most',
+    adminBackupRefresh: 'Pillanatképek frissítése',
+    adminBackupLoading: 'Mentések betöltése...',
+    adminBackupCreating: 'Pillanatkép készítése...',
+    adminBackupCreated: 'A pillanatkép sikeresen elkészült.',
+    adminBackupEmpty: 'Még nincs elérhető pillanatkép.',
+    adminBackupRestore: 'Pillanatkép visszaállítása',
+    adminBackupRestoreConfirm: 'Visszaállítja most ezt a pillanatképet? A szerver újraindul, és a jelenlegi adatok felülíródnak.',
+    adminBackupRestoreStarted: 'A visszaállítás elindult. A szerver hamarosan újraindul.',
+    adminBackupRestoreFailed: 'A visszaállítás sikertelen.',
+    adminBackupManual: 'Kézi',
+    adminBackupScheduled: 'Ütemezett',
+    adminBackupStartup: 'Indításkori',
+    adminBackupUnknownReason: 'Ismeretlen',
+    adminBackupReason: 'Típus',
+    adminBackupCreatedAt: 'Létrehozva',
     // Deleted prayer
     adminPrayerDeletedTag: 'Törölve',
   },
@@ -543,6 +583,10 @@ const homepageTextReplaceForm = document.querySelector('#homepage-text-replace-f
 const homepageTextReplaceFeedback = document.querySelector('#homepage-text-replace-feedback');
 const homepageReplaceFind = document.querySelector('#homepage-replace-find');
 const homepageReplaceWith = document.querySelector('#homepage-replace-with');
+const backupCreateButton = document.querySelector('#backup-create-button');
+const backupRefreshButton = document.querySelector('#backup-refresh-button');
+const backupFeedback = document.querySelector('#backup-feedback');
+const backupList = document.querySelector('#backup-list');
 
 function escapeHtml(value) {
   return String(value)
@@ -1383,9 +1427,87 @@ async function loadHomepageEditorContent() {
   }
 }
 
+function formatBackupReason(reason) {
+  if (reason === 'manual') {
+    return t('adminBackupManual');
+  }
+  if (reason === 'scheduled') {
+    return t('adminBackupScheduled');
+  }
+  if (reason === 'startup') {
+    return t('adminBackupStartup');
+  }
+  return t('adminBackupUnknownReason');
+}
+
+async function loadBackups() {
+  if (!backupList || !backupFeedback) {
+    return;
+  }
+
+  backupFeedback.textContent = t('adminBackupLoading');
+
+  try {
+    const result = await api('/api/admin/backups');
+    const snapshots = Array.isArray(result.snapshots) ? result.snapshots : [];
+
+    backupList.innerHTML = snapshots.map((snapshot) => {
+      const createdLabel = new Date(snapshot.createdAt).toLocaleString();
+      const reasonLabel = formatBackupReason(snapshot.reason);
+
+      return `
+        <article class="admin-item">
+          <div>
+            <p class="section-tag">${escapeHtml(snapshot.name)}</p>
+            <p><strong>${t('adminBackupCreatedAt')}:</strong> ${escapeHtml(createdLabel)}</p>
+            <p><strong>${t('adminBackupReason')}:</strong> ${escapeHtml(reasonLabel)}</p>
+          </div>
+          <div class="admin-item__actions">
+            <button class="button button--secondary restore-backup" type="button" data-snapshot="${escapeHtml(snapshot.name)}">${t('adminBackupRestore')}</button>
+          </div>
+        </article>
+      `;
+    }).join('') || `<p class="empty-state">${t('adminBackupEmpty')}</p>`;
+
+    backupList.querySelectorAll('.restore-backup').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const snapshotName = button.dataset.snapshot;
+        if (!snapshotName) {
+          return;
+        }
+
+        const confirmed = window.confirm(t('adminBackupRestoreConfirm'));
+        if (!confirmed) {
+          return;
+        }
+
+        backupFeedback.textContent = t('adminBackupLoading');
+
+        try {
+          await api('/api/admin/backups/restore', {
+            method: 'POST',
+            body: JSON.stringify({ snapshotName }),
+          });
+          backupFeedback.textContent = t('adminBackupRestoreStarted');
+          window.setTimeout(() => {
+            window.location.reload();
+          }, 6000);
+        } catch (error) {
+          backupFeedback.textContent = error instanceof Error ? error.message : t('adminBackupRestoreFailed');
+        }
+      });
+    });
+
+    backupFeedback.textContent = '';
+  } catch (error) {
+    backupFeedback.textContent = error instanceof Error ? error.message : t('adminBackupRestoreFailed');
+  }
+}
+
 async function hydrateDashboard() {
   await Promise.all([
     loadOverview(),
+    loadBackups(),
     loadPrayers(),
     loadDeletedPrayers(),
     loadEvents(),
@@ -1653,6 +1775,32 @@ if (galleryForm && galleryFeedback) {
 if (homepageEditorLoadButton) {
   homepageEditorLoadButton.addEventListener('click', async () => {
     await loadHomepageEditorContent();
+  });
+}
+
+if (backupRefreshButton) {
+  backupRefreshButton.addEventListener('click', async () => {
+    await loadBackups();
+  });
+}
+
+if (backupCreateButton) {
+  backupCreateButton.addEventListener('click', async () => {
+    if (!backupFeedback) {
+      return;
+    }
+
+    backupFeedback.textContent = t('adminBackupCreating');
+
+    try {
+      await api('/api/admin/backups/create', {
+        method: 'POST',
+      });
+      await loadBackups();
+      backupFeedback.textContent = t('adminBackupCreated');
+    } catch (error) {
+      backupFeedback.textContent = error instanceof Error ? error.message : t('adminBackupRestoreFailed');
+    }
   });
 }
 
