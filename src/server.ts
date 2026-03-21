@@ -1247,6 +1247,7 @@ app.get('/api/admin/backups', requireAdmin, (_req: Request, res: Response) => {
   res.json({
     backupsEnabled: automaticBackupsEnabled,
     backupDir,
+    isEphemeralStorageFallbackActive: shouldFallbackToEphemeral,
     snapshots: listBackupSnapshots(),
   });
 });

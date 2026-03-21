@@ -253,6 +253,7 @@ const adminTranslations = {
     adminBackupCopyPath: 'Copy path',
     adminBackupCopySuccess: 'Backup path copied.',
     adminBackupCopyFailed: 'Unable to copy backup path.',
+    adminBackupEphemeralWarning: 'Warning: temporary storage is active. New edits can disappear after restart or deploy. Fix Render disk mount immediately.',
     // Deleted prayer
     adminPrayerDeletedTag: 'Deleted',
   },
@@ -509,6 +510,7 @@ const adminTranslations = {
     adminBackupCopyPath: 'Útvonal másolása',
     adminBackupCopySuccess: 'A mentési útvonal másolva.',
     adminBackupCopyFailed: 'A mentési útvonal nem másolható.',
+    adminBackupEphemeralWarning: 'Figyelem: ideiglenes tárhely aktív. Az új szerkesztések újraindítás vagy deploy után eltűnhetnek. Javítsa azonnal a Render lemez csatolását.',
     // Deleted prayer
     adminPrayerDeletedTag: 'Törölve',
   },
@@ -599,6 +601,7 @@ const backupCopyPathButton = document.querySelector('#backup-copy-path-button');
 const backupFeedback = document.querySelector('#backup-feedback');
 const backupList = document.querySelector('#backup-list');
 const backupPath = document.querySelector('#backup-path');
+const backupStorageWarning = document.querySelector('#backup-storage-warning');
 
 function escapeHtml(value) {
   return String(value)
@@ -1486,7 +1489,7 @@ function formatBackupReason(reason) {
 }
 
 async function loadBackups() {
-  if (!backupList || !backupFeedback || !backupPath) {
+  if (!backupList || !backupFeedback || !backupPath || !backupStorageWarning) {
     return;
   }
 
@@ -1498,7 +1501,9 @@ async function loadBackups() {
     const resolvedBackupDir = typeof result.backupDir === 'string' && result.backupDir.trim()
       ? result.backupDir
       : t('adminBackupPathUnavailable');
+    const isEphemeralFallbackActive = result.isEphemeralStorageFallbackActive === true;
     backupPath.textContent = resolvedBackupDir;
+    backupStorageWarning.textContent = isEphemeralFallbackActive ? t('adminBackupEphemeralWarning') : '';
 
     backupList.innerHTML = snapshots.map((snapshot) => {
       const createdLabel = new Date(snapshot.createdAt).toLocaleString();
@@ -1550,6 +1555,7 @@ async function loadBackups() {
     backupFeedback.textContent = '';
   } catch (error) {
     backupPath.textContent = t('adminBackupPathUnavailable');
+    backupStorageWarning.textContent = '';
     backupFeedback.textContent = error instanceof Error ? error.message : t('adminBackupRestoreFailed');
   }
 }
