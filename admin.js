@@ -241,6 +241,8 @@ const adminTranslations = {
     adminBackupRestore: 'Restore snapshot',
     adminBackupRestoreConfirm: 'Restore this snapshot now? The server will restart and current data will be replaced.',
     adminBackupRestoreStarted: 'Restore started. The server will restart shortly.',
+    adminBackupRestoreWaiting: 'Restore started. Waiting for server to come back...',
+    adminBackupRestoreStillStarting: 'Restore is in progress. Server is still starting, please wait and refresh in a minute.',
     adminBackupRestoreFailed: 'Restore failed.',
     adminBackupManual: 'Manual',
     adminBackupScheduled: 'Scheduled',
@@ -498,6 +500,8 @@ const adminTranslations = {
     adminBackupRestore: 'Pillanatkép visszaállítása',
     adminBackupRestoreConfirm: 'Visszaállítja most ezt a pillanatképet? A szerver újraindul, és a jelenlegi adatok felülíródnak.',
     adminBackupRestoreStarted: 'A visszaállítás elindult. A szerver hamarosan újraindul.',
+    adminBackupRestoreWaiting: 'Visszaállítás elindult. Várakozás, amíg a szerver újra elérhető lesz...',
+    adminBackupRestoreStillStarting: 'A visszaállítás folyamatban van. A szerver még indul, várjon egy percet, majd frissítsen.',
     adminBackupRestoreFailed: 'A visszaállítás sikertelen.',
     adminBackupManual: 'Kézi',
     adminBackupScheduled: 'Ütemezett',
@@ -1542,10 +1546,39 @@ async function loadBackups() {
             method: 'POST',
             body: JSON.stringify({ snapshotName }),
           });
-          backupFeedback.textContent = t('adminBackupRestoreStarted');
-          window.setTimeout(() => {
+          backupFeedback.textContent = t('adminBackupRestoreWaiting');
+
+          const maxAttempts = 30;
+          const pollDelayMs = 3000;
+          let recovered = false;
+
+          for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            await new Promise((resolve) => {
+              window.setTimeout(resolve, pollDelayMs);
+            });
+
+            try {
+              const response = await fetch('/health', {
+                method: 'GET',
+                cache: 'no-store',
+                credentials: 'include',
+              });
+
+              if (response.ok) {
+                recovered = true;
+                break;
+              }
+            } catch {
+              // Keep polling while service restarts.
+            }
+          }
+
+          if (recovered) {
             window.location.reload();
-          }, 6000);
+            return;
+          }
+
+          backupFeedback.textContent = t('adminBackupRestoreStillStarting');
         } catch (error) {
           backupFeedback.textContent = error instanceof Error ? error.message : t('adminBackupRestoreFailed');
         }
