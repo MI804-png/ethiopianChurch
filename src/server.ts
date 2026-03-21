@@ -128,6 +128,7 @@ const defaultUploadsDir = path.join(projectRoot, 'uploads');
 const renderDataDir = path.join(renderPersistentRoot, 'data');
 const renderUploadsDir = path.join(renderPersistentRoot, 'uploads');
 const hasRenderPersistentDisk = process.platform !== 'win32' && fs.existsSync(renderPersistentRoot);
+const allowEphemeralStorageFallback = process.env.ALLOW_EPHEMERAL_STORAGE_FALLBACK === 'true';
 const usesRenderPersistentPath =
   process.env.DATA_DIR?.startsWith(renderPersistentRoot)
   || process.env.UPLOADS_DIR?.startsWith(renderPersistentRoot)
@@ -138,18 +139,28 @@ const missingRenderPersistentDisk =
   && usesRenderPersistentPath
   && !hasRenderPersistentDisk;
 
-const configuredDataDir = missingRenderPersistentDisk && process.env.DATA_DIR?.startsWith(renderPersistentRoot)
+const shouldFallbackToEphemeral = missingRenderPersistentDisk && allowEphemeralStorageFallback;
+
+const configuredDataDir = shouldFallbackToEphemeral && process.env.DATA_DIR?.startsWith(renderPersistentRoot)
   ? undefined
   : process.env.DATA_DIR;
-const configuredUploadsDir = missingRenderPersistentDisk && process.env.UPLOADS_DIR?.startsWith(renderPersistentRoot)
+const configuredUploadsDir = shouldFallbackToEphemeral && process.env.UPLOADS_DIR?.startsWith(renderPersistentRoot)
   ? undefined
   : process.env.UPLOADS_DIR;
 
 if (missingRenderPersistentDisk) {
+  if (!allowEphemeralStorageFallback) {
+    throw new Error(
+      `[storage] Persistent path ${renderPersistentRoot} is not mounted. `
+      + 'Refusing to start in production to avoid silent data loss. '
+      + 'Attach the Render disk, or set ALLOW_EPHEMERAL_STORAGE_FALLBACK=true to bypass (not recommended).'
+    );
+  }
+
   console.warn(
     `[storage] Persistent path ${renderPersistentRoot} is not mounted. `
-    + 'Falling back to ephemeral local storage for this boot. '
-    + 'Attach the Render disk to persist data across deploys.'
+    + 'Falling back to ephemeral local storage because ALLOW_EPHEMERAL_STORAGE_FALLBACK=true. '
+    + 'Data will not survive deploys or restarts.'
   );
 }
 
@@ -184,6 +195,16 @@ const parsedResourceUploadMaxMb = Number(process.env.RESOURCE_UPLOAD_MAX_MB || 5
 const resourceUploadMaxMb = Number.isFinite(parsedResourceUploadMaxMb)
   ? Math.min(Math.max(parsedResourceUploadMaxMb, 1), 500)
   : 50;
+const automaticBackupsEnabled = process.env.ENABLE_AUTOMATIC_BACKUPS !== 'false';
+const parsedBackupIntervalHours = Number(process.env.BACKUP_INTERVAL_HOURS || 24);
+const backupIntervalHours = Number.isFinite(parsedBackupIntervalHours)
+  ? Math.min(Math.max(parsedBackupIntervalHours, 1), 168)
+  : 24;
+const parsedBackupRetentionDays = Number(process.env.BACKUP_RETENTION_DAYS || 14);
+const backupRetentionDays = Number.isFinite(parsedBackupRetentionDays)
+  ? Math.min(Math.max(parsedBackupRetentionDays, 1), 365)
+  : 14;
+const backupDir = resolveRuntimePath(process.env.BACKUP_DIR, path.join(dataDir, 'backups'));
 const canSendInquiryEmail = Boolean(smtpHost && smtpUser && smtpPass && inquiryDestination);
 const mailTransporter = canSendInquiryEmail
   ? nodemailer.createTransport({
@@ -224,12 +245,98 @@ if (uploadsDir !== defaultUploadsDir) {
   copyDirectoryMissingFiles(path.join(defaultUploadsDir, 'resources'), resourceUploadsDir);
 }
 
+fs.mkdirSync(backupDir, { recursive: true });
+
 console.info(
   `[storage] dataDir=${dataDir} uploadsDir=${uploadsDir} renderDiskDetected=${hasRenderPersistentDisk}`
 );
 
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
+
+function createBackupSnapshot(reason: 'startup' | 'scheduled') {
+  if (!automaticBackupsEnabled) {
+    return;
+  }
+
+  const snapshotTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const snapshotDir = path.join(backupDir, `snapshot-${snapshotTimestamp}`);
+  const snapshotUploadsDir = path.join(snapshotDir, 'uploads');
+
+  try {
+    fs.mkdirSync(snapshotDir, { recursive: true });
+    db.pragma('wal_checkpoint(TRUNCATE)');
+
+    if (fs.existsSync(dbPath)) {
+      fs.copyFileSync(dbPath, path.join(snapshotDir, 'church.db'));
+    }
+
+    if (fs.existsSync(homepageContentPath)) {
+      fs.copyFileSync(homepageContentPath, path.join(snapshotDir, 'homepage-content.json'));
+    }
+
+    if (fs.existsSync(uploadsDir)) {
+      fs.cpSync(uploadsDir, snapshotUploadsDir, { recursive: true, force: true });
+    }
+
+    const metadata = {
+      createdAt: new Date().toISOString(),
+      reason,
+      dataDir,
+      uploadsDir,
+    };
+    fs.writeFileSync(path.join(snapshotDir, 'metadata.json'), JSON.stringify(metadata), 'utf8');
+    console.info(`[backup] Snapshot created at ${snapshotDir} (${reason})`);
+  } catch (error) {
+    console.error(`[backup] Snapshot failed (${reason}):`, error);
+  }
+}
+
+function cleanupOldBackups() {
+  if (!automaticBackupsEnabled) {
+    return;
+  }
+
+  const cutoffMs = Date.now() - (backupRetentionDays * 24 * 60 * 60 * 1000);
+
+  try {
+    const entries = fs.readdirSync(backupDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() || !entry.name.startsWith('snapshot-')) {
+        continue;
+      }
+
+      const entryPath = path.join(backupDir, entry.name);
+      const stats = fs.statSync(entryPath);
+      if (stats.mtimeMs < cutoffMs) {
+        fs.rmSync(entryPath, { recursive: true, force: true });
+      }
+    }
+  } catch (error) {
+    console.error('[backup] Retention cleanup failed:', error);
+  }
+}
+
+function startAutomaticBackups() {
+  if (!automaticBackupsEnabled) {
+    console.info('[backup] Automatic backups are disabled (ENABLE_AUTOMATIC_BACKUPS=false).');
+    return;
+  }
+
+  createBackupSnapshot('startup');
+  cleanupOldBackups();
+
+  const intervalMs = backupIntervalHours * 60 * 60 * 1000;
+  const timer = setInterval(() => {
+    createBackupSnapshot('scheduled');
+    cleanupOldBackups();
+  }, intervalMs);
+  timer.unref();
+
+  console.info(
+    `[backup] Automatic backups enabled. dir=${backupDir} intervalHours=${backupIntervalHours} retentionDays=${backupRetentionDays}`
+  );
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
@@ -2588,6 +2695,8 @@ app.use((req: Request, res: Response) => {
 
   res.status(404).sendFile(path.join(projectRoot, 'index.html'));
 });
+
+startAutomaticBackups();
 
 app.listen(port, () => {
   console.log(`Church website server running on http://localhost:${port}`);

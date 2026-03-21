@@ -22,6 +22,14 @@ services:
         value: /opt/render/project/src/persistent/data
       - key: UPLOADS_DIR
         value: /opt/render/project/src/persistent/uploads
+      - key: BACKUP_DIR
+        value: /opt/render/project/src/persistent/backups
+      - key: BACKUP_INTERVAL_HOURS
+        value: 24
+      - key: BACKUP_RETENTION_DAYS
+        value: 14
+      - key: ENABLE_AUTOMATIC_BACKUPS
+        value: "true"
     disk:
       name: church-persistent-disk
       mountPath: /opt/render/project/src/persistent
