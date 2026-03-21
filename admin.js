@@ -248,6 +248,8 @@ const adminTranslations = {
     adminBackupUnknownReason: 'Unknown',
     adminBackupReason: 'Reason',
     adminBackupCreatedAt: 'Created',
+    adminBackupPathLabel: 'Backup path',
+    adminBackupPathUnavailable: 'Unavailable',
     // Deleted prayer
     adminPrayerDeletedTag: 'Deleted',
   },
@@ -499,6 +501,8 @@ const adminTranslations = {
     adminBackupUnknownReason: 'Ismeretlen',
     adminBackupReason: 'Típus',
     adminBackupCreatedAt: 'Létrehozva',
+    adminBackupPathLabel: 'Mentési útvonal',
+    adminBackupPathUnavailable: 'Nem elérhető',
     // Deleted prayer
     adminPrayerDeletedTag: 'Törölve',
   },
@@ -587,6 +591,7 @@ const backupCreateButton = document.querySelector('#backup-create-button');
 const backupRefreshButton = document.querySelector('#backup-refresh-button');
 const backupFeedback = document.querySelector('#backup-feedback');
 const backupList = document.querySelector('#backup-list');
+const backupPath = document.querySelector('#backup-path');
 
 function escapeHtml(value) {
   return String(value)
@@ -1441,7 +1446,7 @@ function formatBackupReason(reason) {
 }
 
 async function loadBackups() {
-  if (!backupList || !backupFeedback) {
+  if (!backupList || !backupFeedback || !backupPath) {
     return;
   }
 
@@ -1450,6 +1455,10 @@ async function loadBackups() {
   try {
     const result = await api('/api/admin/backups');
     const snapshots = Array.isArray(result.snapshots) ? result.snapshots : [];
+    const resolvedBackupDir = typeof result.backupDir === 'string' && result.backupDir.trim()
+      ? result.backupDir
+      : t('adminBackupPathUnavailable');
+    backupPath.textContent = resolvedBackupDir;
 
     backupList.innerHTML = snapshots.map((snapshot) => {
       const createdLabel = new Date(snapshot.createdAt).toLocaleString();
@@ -1500,6 +1509,7 @@ async function loadBackups() {
 
     backupFeedback.textContent = '';
   } catch (error) {
+    backupPath.textContent = t('adminBackupPathUnavailable');
     backupFeedback.textContent = error instanceof Error ? error.message : t('adminBackupRestoreFailed');
   }
 }
