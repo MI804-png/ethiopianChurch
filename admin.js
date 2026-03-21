@@ -250,6 +250,9 @@ const adminTranslations = {
     adminBackupCreatedAt: 'Created',
     adminBackupPathLabel: 'Backup path',
     adminBackupPathUnavailable: 'Unavailable',
+    adminBackupCopyPath: 'Copy path',
+    adminBackupCopySuccess: 'Backup path copied.',
+    adminBackupCopyFailed: 'Unable to copy backup path.',
     // Deleted prayer
     adminPrayerDeletedTag: 'Deleted',
   },
@@ -503,6 +506,9 @@ const adminTranslations = {
     adminBackupCreatedAt: 'Létrehozva',
     adminBackupPathLabel: 'Mentési útvonal',
     adminBackupPathUnavailable: 'Nem elérhető',
+    adminBackupCopyPath: 'Útvonal másolása',
+    adminBackupCopySuccess: 'A mentési útvonal másolva.',
+    adminBackupCopyFailed: 'A mentési útvonal nem másolható.',
     // Deleted prayer
     adminPrayerDeletedTag: 'Törölve',
   },
@@ -589,6 +595,7 @@ const homepageReplaceFind = document.querySelector('#homepage-replace-find');
 const homepageReplaceWith = document.querySelector('#homepage-replace-with');
 const backupCreateButton = document.querySelector('#backup-create-button');
 const backupRefreshButton = document.querySelector('#backup-refresh-button');
+const backupCopyPathButton = document.querySelector('#backup-copy-path-button');
 const backupFeedback = document.querySelector('#backup-feedback');
 const backupList = document.querySelector('#backup-list');
 const backupPath = document.querySelector('#backup-path');
@@ -624,6 +631,39 @@ function countBigrams(value) {
   }
 
   return bigrams;
+}
+
+async function copyTextToClipboard(value) {
+  if (!value) {
+    return false;
+  }
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Fallback below for older or restricted browsers.
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  let copied = false;
+  try {
+    copied = document.execCommand('copy');
+  } catch {
+    copied = false;
+  }
+
+  document.body.removeChild(textarea);
+  return copied;
 }
 
 function stringSimilarity(left, right) {
@@ -1811,6 +1851,25 @@ if (backupCreateButton) {
     } catch (error) {
       backupFeedback.textContent = error instanceof Error ? error.message : t('adminBackupRestoreFailed');
     }
+  });
+}
+
+if (backupCopyPathButton) {
+  backupCopyPathButton.addEventListener('click', async () => {
+    if (!backupPath || !backupFeedback) {
+      return;
+    }
+
+    const value = backupPath.textContent?.trim() || '';
+    const isUnavailableValue = value === t('adminBackupPathUnavailable');
+
+    if (!value || isUnavailableValue) {
+      backupFeedback.textContent = t('adminBackupCopyFailed');
+      return;
+    }
+
+    const copied = await copyTextToClipboard(value);
+    backupFeedback.textContent = copied ? t('adminBackupCopySuccess') : t('adminBackupCopyFailed');
   });
 }
 
